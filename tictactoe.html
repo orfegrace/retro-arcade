@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tic-Tac-Toe · Arcade</title>
+<title>🅾️ Tic-Tac-Toe</title>
 <link rel="stylesheet" href="theme.css">
 <style>
 body {
@@ -34,15 +34,11 @@ body::after {
 /* Title */
 h1 {
   font-family: var(--font-pixel);
-  font-size: 1.1rem;
-  background: linear-gradient(135deg, var(--pink-light), var(--lavender), var(--mint));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 1rem;
   letter-spacing: 2px;
-  filter: drop-shadow(0 0 12px rgba(220,100,160,0.45));
-  margin-bottom: 6px;
-  text-align: center;
+  background: linear-gradient(135deg, var(--pink-light), var(--lavender), var(--mint));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 8px rgba(220,100,160,0.35));
 }
 
 /* Mode selector */
@@ -342,7 +338,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
 
 <a href="index.html?from=game" style="position:fixed;top:14px;left:14px;z-index:200;background:rgba(24,16,42,0.85);color:#c090b0;font-family:'Press Start 2P',monospace;font-size:0.42rem;border:1.5px solid #5a2855;border-radius:2px;padding:7px 14px;text-decoration:none;backdrop-filter:blur(8px);letter-spacing:1px;display:inline-flex;align-items:center;line-height:1;" onclick="event.preventDefault();playExitSound();setTimeout(()=>location.href='index.html?from=game',350);">← Arcade</a>
 
-<h1>✕ ○ Tic-Tac-Toe</h1>
+<h1>🅾️ Tic-Tac-Toe</h1>
 
 <div class="mode-row">
   <button class="mode-btn" id="btn-2p" onclick="setMode('2p')">2 Players</button>

@@ -671,6 +671,11 @@ body.light-mode #theme-toggle {
   color: rgba(42,10,30,0.6);
 }
 body.light-mode #theme-toggle:hover { opacity: 1; }
+body.light-mode h1 {
+  background: linear-gradient(135deg, #b0006a, #7030b0, #207878);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 6px rgba(140,0,90,0.15));
+}
 </style>
 <button id="theme-toggle" onclick="toggleTheme()"></button>
 <script>

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🃏 Memory Match</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    padding: 24px;
+    gap: 20px;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+  h1 {
+    font-family: var(--font-pixel);
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--pink-light), var(--lavender), var(--mint));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(220, 100, 160, 0.35));
+  }
+  .stats { display: flex; gap: 28px; align-items: center; }
+  .stat { text-align: center; }
+  .stat-num { font-family: var(--font-pixel); font-size: 1rem; color: var(--pink); }
+  .stat-lbl { font-family: var(--font-pixel); font-size: 0.38rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-top: 6px; }
+  .divider { width: 1px; height: 32px; background: var(--border); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 110px);
+    gap: 10px;
+  }
+
+  .card { width: 110px; height: 110px; perspective: 700px; cursor: pointer; }
+  .card-inner {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.42s cubic-bezier(.4,0,.2,1);
+    border-radius: 4px;
+  }
+  .card.flipped .card-inner,
+  .card.matched .card-inner { transform: rotateY(180deg); }
+
+  .face {
+    position: absolute; inset: 0; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  }
+  .back {
+    background: linear-gradient(135deg, var(--bg-card-2), #200f30);
+    border: 2px solid var(--border);
+    font-size: 2rem; color: rgba(192, 160, 224, 0.35);
+  }
+  .front {
+    background: linear-gradient(135deg, var(--bg-card), #1a0e28);
+    border: 2px solid var(--border-bright);
+    font-size: 3rem; transform: rotateY(180deg);
+  }
+  .card.matched .front { border-color: var(--mint); box-shadow: 0 0 22px rgba(136,192,176,0.4); }
+  .card.matched { animation: match-pop 0.4s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes match-pop { 0%{transform:scale(0.95)} 60%{transform:scale(1.06)} 100%{transform:scale(1)} }
+  .card.wrong { animation: wrong-shake 0.38s ease; }
+  @keyframes wrong-shake {
+    0%,100%{ transform: translateX(0); }
+    25%    { transform: translateX(-7px) rotate(-2deg); }
+    75%    { transform: translateX(7px)  rotate(2deg); }
+  }
+
+  .btn {
+    background: linear-gradient(135deg, var(--pink), var(--lavender));
+    color: var(--bg);
+    font-family: var(--font-pixel);
+    font-size: 0.52rem;
+    border: 2px solid var(--pink-light);
+    border-radius: 2px;
+    padding: 11px 28px;
+    cursor: pointer;
+    box-shadow: var(--glow-pink);
+    transition: transform 0.2s, box-shadow 0.2s;
+    letter-spacing: 1px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -80%;
+    width: 55%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+    transform: skewX(-15deg);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .btn:hover { transform: translateY(-3px); box-shadow: 0 0 36px rgba(220,100,160,0.5); }
+  .btn:hover::before { animation: shimmer-sweep 0.5s ease forwards; }
+
+  #win-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(14,9,18,0.94);
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; backdrop-filter: blur(10px); z-index: 10;
+  }
+  #win-overlay.show { display: flex; }
+  .win-emoji { font-size: 4rem; animation: wobble 1.5s ease-in-out infinite alternate; }
+  @keyframes wobble { from{transform:rotate(-8deg)scale(1)} to{transform:rotate(8deg)scale(1.1)} }
+  .win-title {
+    font-family: var(--font-pixel);
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, var(--pink-light), var(--lavender));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .win-sub { font-family: var(--font-pixel); color: var(--text-muted); font-size: 0.42rem; }
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+const _fbCfg={apiKey:"AIzaSyAs4pZ-k8IPAAtk3dLM7Gy-oL4nLmOPN4g",authDomain:"retro-arcade-f61e1.firebaseapp.com",projectId:"retro-arcade-f61e1",storageBucket:"retro-arcade-f61e1.firebasestorage.app",messagingSenderId:"750905179148",appId:"1:750905179148:web:e27684e54bfd8e02680229"};
+if(!firebase.apps.length)firebase.initializeApp(_fbCfg);
+const db=firebase.firestore();
+</script>
+</head>
+<body>
+
+<h1>🃏 Memory Match</h1>
+
+<div class="stats">
+  <div class="stat"><div class="stat-num" id="s-moves">0</div><div class="stat-lbl">Moves</div></div>
+  <div class="divider"></div>
+  <div class="stat"><div class="stat-num" id="s-matches">0/8</div><div class="stat-lbl">Pairs</div></div>
+  <div class="divider"></div>
+  <div class="stat"><div class="stat-num" id="s-time">0:00</div><div class="stat-lbl">Time</div></div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div id="win-overlay">
+  <div class="win-emoji">🎉</div>
+  <div class="win-title">All matched!</div>
+  <div class="win-sub" id="win-sub"></div>
+  <div style="display:flex;gap:10px;margin-top:6px;">
+    <button class="btn" onclick="playAgainSound();newGame()">Play Again</button>
+    <a href="index.html?from=game" class="btn" onclick="playExitSound()" style="background:rgba(255,255,255,0.1);color:#f0c0d8;box-shadow:none;border:2px solid rgba(255,255,255,0.2);text-decoration:none;">Exit</a>
+  </div>
+</div>
+
+<script>
+const ALL_EMOJIS = ['🐱','🐶','🐸','🦋','🌸','🍓','⭐','🎮','🦊','🐻','🌈','🍕','🎵','🚀','💎','🌙'];
+const PAIRS = 8;
+
+let cards = [], flipped = [], matched = 0, moves = 0;
+let canFlip = true, timerInterval = null, secs = 0, started = false;
+
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function fmt(s) {
+  return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+}
+
+function newGame() {
+  document.getElementById('win-overlay').classList.remove('show');
+  clearInterval(timerInterval);
+  secs = 0; moves = 0; matched = 0; flipped = []; started = false; canFlip = true;
+  document.getElementById('s-moves').textContent = '0';
+  document.getElementById('s-matches').textContent = '0/8';
+  document.getElementById('s-time').textContent = '0:00';
+
+  const chosen = shuffle([...ALL_EMOJIS]).slice(0, PAIRS);
+  cards = shuffle([...chosen, ...chosen].map((emoji, i) => ({ emoji, id: i })));
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  cards.forEach((card, i) => {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.innerHTML = `
+      <div class="card-inner">
+        <div class="face back">✦</div>
+        <div class="face front">${card.emoji}</div>
+      </div>`;
+    el.addEventListener('click', () => flip(el, i));
+    // stagger entrance
+    el.style.animation = `none`;
+    el.style.opacity = '0';
+    el.style.transform = 'scale(0.8)';
+    setTimeout(() => {
+      el.style.transition = 'opacity 0.3s, transform 0.3s';
+      el.style.opacity = '1';
+      el.style.transform = 'scale(1)';
+    }, i * 40);
+    grid.appendChild(el);
+  });
+}
+
+function flip(el, i) {
+  if (!canFlip || el.classList.contains('flipped') || el.classList.contains('matched')) return;
+  if (!started) { started = true; startTimer(); }
+
+  el.classList.add('flipped');
+  playFlipSound();
+  flipped.push({ el, i });
+
+  if (flipped.length < 2) return;
+
+  canFlip = false;
+  moves++;
+  document.getElementById('s-moves').textContent = moves;
+
+  const [a, b] = flipped;
+  if (cards[a.i].emoji === cards[b.i].emoji) {
+    setTimeout(() => {
+      a.el.classList.add('matched');
+      b.el.classList.add('matched');
+      playMatchSound();
+      matched++;
+      document.getElementById('s-matches').textContent = `${matched}/8`;
+      flipped = []; canFlip = true;
+      if (matched === PAIRS) win();
+    }, 350);
+  } else {
+    setTimeout(() => {
+      a.el.classList.remove('flipped');
+      b.el.classList.remove('flipped');
+      a.el.classList.add('wrong');
+      b.el.classList.add('wrong');
+      setTimeout(() => { a.el.classList.remove('wrong'); b.el.classList.remove('wrong'); }, 400);
+      flipped = []; canFlip = true;
+    }, 950);
+  }
+}
+
+function startTimer() {
+  timerInterval = setInterval(() => {
+    secs++;
+    document.getElementById('s-time').textContent = fmt(secs);
+  }, 1000);
+}
+
+function win() {
+  clearInterval(timerInterval);
+  saveToLeaderboard('memory', Math.max(0, 1000 - moves * 20 - secs * 3));
+  document.getElementById('win-sub').textContent = `${moves} moves · ${fmt(secs)}`;
+  setTimeout(() => playWinSound(), 350);
+  setTimeout(() => document.getElementById('win-overlay').classList.add('show'), 400);
+}
+
+newGame();
+
+function playFlipSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const t = ctx.currentTime;
+  const dur = 0.12;
+
+  // swoosh: bandpass noise, high to low (paper cutting air then landing)
+  const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const noise = ctx.createBufferSource();
+  noise.buffer = buf;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(4200, t);
+  filter.frequency.exponentialRampToValueAtTime(900, t + dur);
+  filter.Q.value = 0.5;
+  const nGain = ctx.createGain();
+  nGain.gain.setValueAtTime(0.0, t);
+  nGain.gain.linearRampToValueAtTime(0.11, t + 0.014);
+  nGain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  noise.connect(filter); filter.connect(nGain); nGain.connect(ctx.destination);
+  noise.start(t);
+
+  // soft thap: low sine pulse at landing
+  const osc = ctx.createOscillator();
+  const oGain = ctx.createGain();
+  osc.connect(oGain); oGain.connect(ctx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(180, t + dur - 0.02);
+  osc.frequency.exponentialRampToValueAtTime(70, t + dur + 0.04);
+  oGain.gain.setValueAtTime(0.07, t + dur - 0.02);
+  oGain.gain.exponentialRampToValueAtTime(0.001, t + dur + 0.05);
+  osc.start(t + dur - 0.02); osc.stop(t + dur + 0.06);
+}
+function playWinSound() {
+  try {
+    const actx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime;
+    [523, 659, 784, 1047].forEach((freq, i) => {
+      const osc = actx.createOscillator(), g = actx.createGain();
+      osc.connect(g); g.connect(actx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, t + i * 0.08);
+      g.gain.setValueAtTime(0.12, t + i * 0.08);
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.12);
+      osc.start(t + i * 0.08); osc.stop(t + i * 0.08 + 0.14);
+    });
+  } catch(e) {}
+}
+
+function playMatchSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const t = ctx.currentTime;
+  [[523, 0], [659, 0.05], [784, 0.1], [1047, 0.15]].forEach(([freq, delay]) => {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(freq, t + delay);
+    gain.gain.setValueAtTime(0.1, t + delay);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.28);
+    osc.start(t + delay); osc.stop(t + delay + 0.3);
+  });
+  const sparkle = ctx.createOscillator(), sg = ctx.createGain();
+  sparkle.connect(sg); sg.connect(ctx.destination);
+  sparkle.type = 'sine';
+  sparkle.frequency.setValueAtTime(2093, t + 0.18);
+  sparkle.frequency.exponentialRampToValueAtTime(1568, t + 0.38);
+  sg.gain.setValueAtTime(0.08, t + 0.18);
+  sg.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+  sparkle.start(t + 0.18); sparkle.stop(t + 0.42);
+}
+function playAgainSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const t = ctx.currentTime;
+  [523, 659, 784].forEach((freq, i) => {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, t + i * 0.07);
+    gain.gain.setValueAtTime(0.13, t + i * 0.07);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.1);
+    osc.start(t + i * 0.07); osc.stop(t + i * 0.07 + 0.12);
+  });
+}
+function playExitSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = ctx.currentTime;
+    [660, 330].forEach((freq, i) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, t + i * 0.12);
+      g.gain.setValueAtTime(0.0, t + i * 0.12);
+      g.gain.linearRampToValueAtTime(0.1, t + i * 0.12 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.12 + 0.14);
+      osc.start(t + i * 0.12);
+      osc.stop(t + i * 0.12 + 0.16);
+    });
+  } catch(e) {}
+}
+</script>
+
+<a href="index.html?from=game" style="position:fixed;top:14px;left:14px;z-index:200;background:rgba(24,16,42,0.85);color:#c090b0;font-family:'Press Start 2P',monospace;font-size:0.42rem;border:1.5px solid #5a2855;border-radius:2px;padding:7px 14px;text-decoration:none;backdrop-filter:blur(8px);letter-spacing:1px;display:inline-flex;align-items:center;line-height:1;" onclick="event.preventDefault();playExitSound();setTimeout(()=>location.href='index.html?from=game',350);">← Arcade</a>
+
+<style>
+body.light-mode {
+  --bg: #fdf0f8;
+  --bg-card: #fff5fb;
+  --bg-card-2: #fce8f5;
+  --text: #1a0614;
+  --text-muted: #6e3858;
+  --pink: #b84880;
+  --border: #e8c8dc;
+  --border-bright: #d090b8;
+  background: #fdf0f8 !important;
+  background-image: none !important;
+}
+body.light-mode::before { opacity: 0.06 !important; }
+body.light-mode::after {
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px) !important;
+}
+#theme-toggle {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 300;
+  background: rgba(0,0,0,0.15);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s;
+  line-height: 1;
+  color: rgba(255,255,255,0.65);
+  opacity: 0.75;
+}
+#theme-toggle:hover { opacity: 1; }
+body.light-mode #theme-toggle {
+  background: rgba(255,255,255,0.35);
+  border-color: rgba(200,100,160,0.2);
+  color: rgba(42,10,30,0.6);
+}
+body.light-mode #theme-toggle:hover { opacity: 1; }
+</style>
+<button id="theme-toggle" onclick="toggleTheme()"></button>
+<script>
+const MOON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  document.getElementById('theme-toggle').innerHTML = isLight ? MOON_SVG : '☼';
+}
+if (localStorage.getItem('theme') === 'light') {
+  document.body.classList.add('light-mode');
+}
+document.getElementById('theme-toggle').innerHTML =
+  document.body.classList.contains('light-mode') ? MOON_SVG : '☼';
+function saveToLeaderboard(game, score) {
+  try {
+    const user = JSON.parse(localStorage.getItem('arcadeSession') || 'null');
+    if (!user) return;
+    db.collection('leaderboard').add({ name: user.name, game, score, date: new Date().toISOString() });
+  } catch(e) {}
+}
+</script>
+</body>
+</html>

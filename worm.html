@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🪱 Worm Game</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: var(--font-body);
+    color: var(--text);
+    user-select: none;
+    gap: 18px;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  h1 {
+    font-family: var(--font-pixel);
+    font-size: 1rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--pink-light), var(--lavender), var(--mint));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(220, 100, 160, 0.35));
+  }
+
+  #wrap {
+    position: relative;
+    border-radius: 4px;
+    border: 2px solid var(--border);
+    box-shadow: var(--glow-pink), var(--glow-lavender), 0 30px 70px rgba(0,0,0,0.6);
+  }
+
+  canvas { display: block; border-radius: 2px; }
+
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: rgba(14,9,18,0.92);
+    border-radius: 2px;
+    backdrop-filter: blur(10px);
+  }
+  #overlay.hidden { display: none; }
+
+  .ov-emoji { font-size: 3.6rem; animation: wobble 2s ease-in-out infinite alternate; }
+  @keyframes wobble {
+    from { transform: rotate(-6deg) scale(1); }
+    to   { transform: rotate(6deg)  scale(1.08); }
+  }
+
+  .ov-title {
+    font-family: var(--font-pixel);
+    font-size: 1rem;
+    background: linear-gradient(135deg, var(--pink-light), var(--lavender));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .ov-scores { display: flex; gap: 36px; margin-top: 4px; }
+  .ov-stat { text-align: center; }
+  .ov-num  { font-family: var(--font-pixel); font-size: 1.1rem; color: var(--pink); }
+  .ov-lbl  { font-family: var(--font-pixel); font-size: 0.38rem; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 6px; }
+
+  .legend {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 20px;
+  }
+  .leg-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+  .leg-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+  .ov-prompt {
+    font-family: var(--font-pixel);
+    font-size: 0.42rem;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 6px;
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+const _fbCfg={apiKey:"AIzaSyAs4pZ-k8IPAAtk3dLM7Gy-oL4nLmOPN4g",authDomain:"retro-arcade-f61e1.firebaseapp.com",projectId:"retro-arcade-f61e1",storageBucket:"retro-arcade-f61e1.firebasestorage.app",messagingSenderId:"750905179148",appId:"1:750905179148:web:e27684e54bfd8e02680229"};
+if(!firebase.apps.length)firebase.initializeApp(_fbCfg);
+const db=firebase.firestore();
+</script>
+</head>
+<body>
+
+<h1>🪱 Worm Game</h1>
+
+<div id="wrap">
+  <canvas id="c" width="600" height="600"></canvas>
+
+  <div id="overlay">
+    <div class="ov-emoji" id="ov-emoji">🪱</div>
+    <div class="ov-title"  id="ov-title">Worm Game</div>
+    <div class="ov-scores" id="ov-scores" style="display:none">
+      <div class="ov-stat"><div class="ov-num" id="ov-score">0</div><div class="ov-lbl">Score</div></div>
+      <div class="ov-stat"><div class="ov-num" id="ov-best">0</div><div class="ov-lbl">Best</div></div>
+    </div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#f9a8d4;box-shadow:0 0 6px #f472b6"></div>+1 pt</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#fde68a;box-shadow:0 0 6px #fbbf24"></div>★ +5 pts · 3s</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#93c5fd;box-shadow:0 0 6px #60a5fa;border-radius:50%"></div>💊 wall wrap · 5s</div>
+    </div>
+    <div class="ov-prompt" id="ov-prompt">Press Space to Start</div>
+    <div id="ov-buttons" style="display:none;gap:10px;margin-top:4px;">
+      <button onclick="playAgainSound();ensureAudio();overlay.classList.add('hidden');state='playing';initGame();" style="background:linear-gradient(135deg,#e070a8,#c0a0e0);color:#0e0912;font-family:'Press Start 2P',monospace;font-size:0.52rem;border:2px solid #f0c0d8;border-radius:2px;padding:12px 22px;cursor:pointer;letter-spacing:1px;">Play Again</button>
+      <a href="index.html?from=game" onclick="playExitSound()" style="background:rgba(192,160,224,0.08);color:#f8e8f4;font-family:'Press Start 2P',monospace;font-size:0.52rem;border:2px solid #b85888;border-radius:2px;padding:12px 22px;text-decoration:none;display:inline-flex;align-items:center;">Exit</a>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════
+   Constants
+════════════════════════════════════════════ */
+const canvas  = document.getElementById('c');
+const ctx     = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+const W = 600, H = 600, CS = 20, GAP = 2;
+const COLS = W / CS, ROWS = H / CS;
+const TRAIL_LIFE    = 420;   // ms a trail segment is visible
+const GOLD_DURATION = 3000;  // ms golden apple lasts
+const PILL_ON_SCREEN= 8000;  // ms blue pill stays on screen
+const INVINCIBLE_MS = 5000;  // ms invincibility lasts
+
+/* ════════════════════════════════════════════
+   Pre-render grid to offscreen canvas (perf)
+════════════════════════════════════════════ */
+const gridCvs = document.createElement('canvas');
+gridCvs.width = W; gridCvs.height = H;
+const gctx = gridCvs.getContext('2d');
+gctx.fillStyle = '#07090f';
+gctx.fillRect(0, 0, W, H);
+gctx.fillStyle = 'rgba(255,255,255,0.03)';
+for (let gx = 0; gx < COLS; gx++)
+  for (let gy = 0; gy < ROWS; gy++) {
+    gctx.beginPath();
+    gctx.arc(gx*CS + CS/2, gy*CS + CS/2, 1, 0, Math.PI*2);
+    gctx.fill();
+  }
+
+/* ════════════════════════════════════════════
+   State
+════════════════════════════════════════════ */
+let snake, dir, nextDir, food, goldenFood, bluePill;
+let score = 0, highScore = 0;
+let particles = [], trail = [];
+let state = 'start';   // 'start' | 'playing' | 'dead'
+let tickTimeout = null;
+let shakeTimer  = 0;
+let invincible  = false, invincibleEnd = 0;
+let goldenEnd   = 0, pillEnd = 0;
+let audioCtx    = null;
+let lastNow     = 0;
+
+/* ════════════════════════════════════════════
+   Audio  (Web Audio API)
+════════════════════════════════════════════ */
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function tone(freq, type, vol, dur, delay = 0) {
+  if (!audioCtx) return;
+  try {
+    const t   = audioCtx.currentTime + delay;
+    const osc = audioCtx.createOscillator();
+    const g   = audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.start(t);
+    osc.stop(t + dur + 0.01);
+  } catch(e) {}
+}
+
+function sfxEat() {
+  const base = 420 + Math.min(score * 6, 280);
+  tone(base,        'sine', 0.30, 0.09);        // root note
+  tone(base * 1.26, 'sine', 0.22, 0.12, 0.07); // minor third, slightly delayed
+}
+function sfxGold()  { tone(660, 'sine', 0.22, 0.08); tone(880, 'sine', 0.18, 0.10, 0.08); }
+function sfxPill()  { [300,400,520,680].forEach((f,i) => tone(f,'sine',0.18,0.12,i*0.06)); }
+function sfxDeath() {
+  if (!audioCtx) return;
+  try {
+    const ac = audioCtx, t = ac.currentTime;
+    const osc = ac.createOscillator(), g = ac.createGain();
+    osc.connect(g); g.connect(ac.destination);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(300, t);
+    osc.frequency.exponentialRampToValueAtTime(55, t + 0.6);
+    g.gain.setValueAtTime(0.3, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    osc.start(t); osc.stop(t + 0.65);
+  } catch(e) {}
+}
+
+/* ════════════════════════════════════════════
+   Game Logic
+════════════════════════════════════════════ */
+function tickMs() { return Math.max(65, 150 - score * 2); }
+
+function randomCell(...avoid) {
+  const blocked = avoid.filter(Boolean);
+  let pos;
+  do {
+    pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+  } while (
+    snake.some(s => s.x === pos.x && s.y === pos.y) ||
+    blocked.some(a => a.x === pos.x && a.y === pos.y)
+  );
+  return pos;
+}
+
+function initGame() {
+  const mx = Math.floor(COLS/2), my = Math.floor(ROWS/2);
+  snake    = [{x:mx,y:my},{x:mx-1,y:my},{x:mx-2,y:my}];
+  dir      = {x:1,y:0};
+  nextDir  = {x:1,y:0};
+  score    = 0;
+  particles = []; trail = [];
+  invincible = false; invincibleEnd = 0;
+  goldenFood = null; goldenEnd = 0;
+  bluePill   = null; pillEnd   = 0;
+  shakeTimer = 0;
+  food = randomCell();
+  scheduleTick();
+}
+
+function scheduleTick() {
+  clearTimeout(tickTimeout);
+  if (state !== 'playing') return;
+  tickTimeout = setTimeout(gameTick, tickMs());
+}
+
+function gameTick() {
+  const now = Date.now();
+  dir = { x: nextDir.x, y: nextDir.y };
+
+  // Save departing tail for rainbow trail
+  const tail = snake[snake.length - 1];
+  trail.push({ x: tail.x, y: tail.y, born: now });
+  if (trail.length > 20) trail.shift();
+
+  // New head position
+  let hx = snake[0].x + dir.x;
+  let hy = snake[0].y + dir.y;
+
+  // Wall
+  if (!invincible) {
+    if (hx < 0 || hx >= COLS || hy < 0 || hy >= ROWS) { die(); return; }
+  } else {
+    hx = ((hx % COLS) + COLS) % COLS;
+    hy = ((hy % ROWS) + ROWS) % ROWS;
+  }
+
+  // Self
+  for (let i = 0; i < snake.length - 1; i++)
+    if (snake[i].x === hx && snake[i].y === hy) { die(); return; }
+
+  const head = { x: hx, y: hy };
+  snake.unshift(head);
+
+  let grew = false;
+
+  // Regular food
+  if (hx === food.x && hy === food.y) {
+    score++; grew = true;
+    burst(food.x*CS+CS/2, food.y*CS+CS/2, '#f472b6', 12);
+    sfxEat();
+    food = randomCell(goldenFood, bluePill);
+    if (!goldenFood && Math.random() < 0.25) { goldenFood = randomCell(food, bluePill); goldenEnd = now + GOLD_DURATION; }
+    if (!bluePill   && Math.random() < 0.15) { bluePill   = randomCell(food, goldenFood); pillEnd  = now + PILL_ON_SCREEN; }
+  }
+
+  // Golden apple
+  if (goldenFood && hx === goldenFood.x && hy === goldenFood.y) {
+    score += 5; grew = true;
+    burst(goldenFood.x*CS+CS/2, goldenFood.y*CS+CS/2, '#fbbf24', 22);
+    sfxGold();
+    goldenFood = null; goldenEnd = 0;
+  }
+
+  // Blue pill  (no grow)
+  if (bluePill && hx === bluePill.x && hy === bluePill.y) {
+    invincible = true; invincibleEnd = now + INVINCIBLE_MS;
+    burst(bluePill.x*CS+CS/2, bluePill.y*CS+CS/2, '#60a5fa', 16);
+    sfxPill();
+    bluePill = null; pillEnd = 0;
+  }
+
+  if (!grew) snake.pop();
+
+  // Expire pickups
+  if (goldenFood && now > goldenEnd) { goldenFood = null; goldenEnd = 0; }
+  if (bluePill   && now > pillEnd)   { bluePill   = null; pillEnd   = 0; }
+  if (invincible && now > invincibleEnd) invincible = false;
+
+  scheduleTick();
+}
+
+function die() {
+  state = 'dead';
+  if (score > highScore) highScore = score;
+  saveToLeaderboard('worm', score);
+  clearTimeout(tickTimeout);
+  shakeTimer = 520;
+  burst(snake[0].x*CS+CS/2, snake[0].y*CS+CS/2, '#ef4444', 30);
+  sfxDeath();
+  setTimeout(showOverlay, 680);
+}
+
+/* ════════════════════════════════════════════
+   Particles
+════════════════════════════════════════════ */
+function burst(cx, cy, color, n) {
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + Math.random() * 0.6;
+    const spd = 1.5 + Math.random() * 4;
+    particles.push({
+      x: cx, y: cy,
+      vx: Math.cos(a) * spd, vy: Math.sin(a) * spd,
+      life: 1, decay: 0.018 + Math.random() * 0.028,
+      r: 2.5 + Math.random() * 4, color
+    });
+  }
+}
+
+/* ════════════════════════════════════════════
+   Drawing helpers
+════════════════════════════════════════════ */
+function rr(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+  ctx.fill();
+}
+
+function cell(gx, gy, fill, glow, blur, r = 6) {
+  ctx.shadowBlur  = blur;
+  ctx.shadowColor = glow;
+  ctx.fillStyle   = fill;
+  rr(gx*CS+GAP, gy*CS+GAP, CS-GAP*2, CS-GAP*2, r);
+  ctx.shadowBlur  = 0;
+}
+
+/* ════════════════════════════════════════════
+   Overlay
+════════════════════════════════════════════ */
+function showOverlay() {
+  document.getElementById('ov-emoji').textContent  = state === 'dead' ? '💀' : '🪱';
+  document.getElementById('ov-title').textContent  = state === 'dead' ? 'Game Over' : 'Worm Game';
+  document.getElementById('ov-prompt').textContent = state === 'dead' ? '' : 'Press Space to Start';
+  const sc = document.getElementById('ov-scores');
+  const btns = document.getElementById('ov-buttons');
+  if (state === 'dead') {
+    sc.style.display = 'flex';
+    btns.style.display = 'flex';
+    document.getElementById('ov-score').textContent = score;
+    document.getElementById('ov-best').textContent  = highScore;
+  } else {
+    sc.style.display = 'none';
+    btns.style.display = 'none';
+  }
+  overlay.classList.remove('hidden');
+}
+
+/* ════════════════════════════════════════════
+   Render loop
+════════════════════════════════════════════ */
+function render(now) {
+  requestAnimationFrame(render);
+  const dt = Math.min(now - lastNow, 50);
+  lastNow = now;
+
+  // Decay shake
+  if (shakeTimer > 0) shakeTimer = Math.max(0, shakeTimer - dt);
+
+  // Update particles
+  particles = particles.filter(p => {
+    p.x += p.vx; p.y += p.vy;
+    p.vx *= 0.93; p.vy *= 0.93;
+    p.life -= p.decay;
+    return p.life > 0;
+  });
+
+  // Screen shake offset
+  let sx = 0, sy = 0;
+  if (shakeTimer > 0) {
+    const str = (shakeTimer / 520) * 9;
+    sx = (Math.random() * 2 - 1) * str;
+    sy = (Math.random() * 2 - 1) * str;
+  }
+
+  ctx.save();
+  ctx.translate(sx, sy);
+
+  // Grid (pre-rendered)
+  ctx.drawImage(gridCvs, 0, 0);
+
+  if (state !== 'start') {
+    // ── Fading rainbow trail ──
+    trail.forEach(seg => {
+      const age = now - seg.born;
+      const t   = Math.max(0, 1 - age / TRAIL_LIFE);
+      if (t <= 0) return;
+      const hue = (seg.x * 14 + seg.y * 19 + now * 0.04) % 360;
+      ctx.shadowBlur  = 7 * t;
+      ctx.shadowColor = `hsl(${hue},90%,65%)`;
+      ctx.fillStyle   = `hsla(${hue},85%,65%,${t * 0.55})`;
+      rr(seg.x*CS+GAP, seg.y*CS+GAP, CS-GAP*2, CS-GAP*2, 5);
+    });
+    ctx.shadowBlur = 0;
+
+    // ── Snake body (rainbow) ──
+    snake.forEach((seg, i) => {
+      const hue = (now * 0.07 + i * 13) % 360;
+      const sat = invincible ? 100 : 84;
+      const lit = i === 0 ? 74 : 62;
+      cell(seg.x, seg.y,
+        `hsl(${hue},${sat}%,${lit}%)`,
+        `hsl(${hue},100%,72%)`,
+        i === 0 ? 22 : (invincible ? 14 : 7),
+        i === 0 ? 9 : 6
+      );
+    });
+
+    // Invincible electric shimmer on head
+    if (invincible) {
+      const hue = (now * 0.3) % 360;
+      ctx.strokeStyle = `hsl(${hue},100%,80%)`;
+      ctx.lineWidth   = 2;
+      ctx.shadowBlur  = 14;
+      ctx.shadowColor = `hsl(${hue},100%,80%)`;
+      ctx.beginPath();
+      ctx.roundRect(snake[0].x*CS+GAP-2, snake[0].y*CS+GAP-2, CS-GAP*2+4, CS-GAP*2+4, 11);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    // ── Regular food ──
+    {
+      const pulse = 0.65 + 0.35 * Math.sin(now * 0.005);
+      cell(food.x, food.y, '#f9a8d4', '#f472b6', 24 * pulse, 8);
+    }
+
+    // ── Golden apple ──
+    if (goldenFood) {
+      const left  = goldenEnd - Date.now();
+      const flash = left < 1000 ? (Math.sin(now * 0.025) > 0 ? 1 : 0.3) : 1;
+      ctx.globalAlpha = flash;
+      cell(goldenFood.x, goldenFood.y, '#fde68a', '#fbbf24', 28, 8);
+      ctx.fillStyle   = 'rgba(120,53,15,0.85)';
+      ctx.font        = 'bold 12px sans-serif';
+      ctx.textAlign   = 'center';
+      ctx.textBaseline= 'middle';
+      ctx.fillText('★', goldenFood.x*CS+CS/2, goldenFood.y*CS+CS/2);
+      ctx.globalAlpha = 1;
+    }
+
+    // ── Blue pill ──
+    if (bluePill) {
+      const pulse = 0.6 + 0.4 * Math.sin(now * 0.009);
+      cell(bluePill.x, bluePill.y, '#93c5fd', '#3b82f6', 20*pulse, 11);
+      ctx.fillStyle   = 'rgba(30,58,138,0.8)';
+      ctx.font        = 'bold 11px sans-serif';
+      ctx.textAlign   = 'center';
+      ctx.textBaseline= 'middle';
+      ctx.fillText('●', bluePill.x*CS+CS/2, bluePill.y*CS+CS/2);
+    }
+
+    // ── Particles ──
+    particles.forEach(p => {
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle   = p.color;
+      ctx.shadowBlur  = 10;
+      ctx.shadowColor = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur  = 0;
+
+    // ── HUD ──
+    ctx.fillStyle = 'rgba(255,255,255,0.88)';
+    ctx.font      = '700 15px Nunito,sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`Score  ${score}`, 12, 12);
+    ctx.fillStyle = 'rgba(255,255,255,0.33)';
+    ctx.font      = '600 13px Nunito,sans-serif';
+    ctx.fillText(`Best  ${highScore}`, 12, 33);
+
+    // Speed indicator (subtle)
+    const spd = Math.min(score / 43, 1);
+    if (spd > 0) {
+      ctx.fillStyle = `rgba(167,139,250,${0.1 + spd * 0.25})`;
+      rr(W-14, 12, 4, Math.round(spd * 50), 2);
+    }
+
+    // Invincibility bar
+    if (invincible) {
+      const pct = Math.max(0, (invincibleEnd - Date.now()) / INVINCIBLE_MS);
+      const bw = 110, bh = 8, bx = W-bw-12, by = 12;
+      ctx.fillStyle = 'rgba(96,165,250,0.12)';
+      rr(bx, by, bw, bh, 4);
+      ctx.shadowBlur  = 10;
+      ctx.shadowColor = '#60a5fa';
+      ctx.fillStyle   = `hsl(${200 + pct*40},90%,65%)`;
+      rr(bx, by, bw*pct, bh, 4);
+      ctx.shadowBlur  = 0;
+      ctx.fillStyle   = 'rgba(147,197,253,0.75)';
+      ctx.font        = '600 11px Nunito,sans-serif';
+      ctx.textAlign   = 'right';
+      ctx.textBaseline= 'top';
+      ctx.fillText('🛡 wrap mode', W-12, 26);
+    }
+  }
+
+  ctx.restore();
+}
+
+/* ════════════════════════════════════════════
+   Input
+════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (e.key === ' ') {
+    e.preventDefault();
+    if (state === 'start' || state === 'dead') {
+      ensureAudio();
+      overlay.classList.add('hidden');
+      state = 'playing';
+      initGame();
+    }
+    return;
+  }
+  if (state !== 'playing') return;
+  const map = {
+    ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0},
+    w:{x:0,y:-1}, s:{x:0,y:1}, a:{x:-1,y:0}, d:{x:1,y:0},
+    W:{x:0,y:-1}, S:{x:0,y:1}, A:{x:-1,y:0}, D:{x:1,y:0},
+  };
+  const d = map[e.key];
+  if (d) {
+    e.preventDefault();
+    if (!(d.x === -nextDir.x && d.y === -nextDir.y)) nextDir = d;
+  }
+});
+
+/* ════════════════════════════════════════════
+   Boot
+════════════════════════════════════════════ */
+showOverlay();
+requestAnimationFrame(render);
+
+function playAgainSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const t = ctx.currentTime;
+  [523, 659, 784].forEach((freq, i) => {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, t + i * 0.07);
+    gain.gain.setValueAtTime(0.15, t + i * 0.07);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.1);
+    osc.start(t + i * 0.07); osc.stop(t + i * 0.07 + 0.12);
+  });
+}
+function playExitSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = ctx.currentTime;
+    [660, 330].forEach((freq, i) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, t + i * 0.12);
+      g.gain.setValueAtTime(0.0, t + i * 0.12);
+      g.gain.linearRampToValueAtTime(0.2, t + i * 0.12 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.12 + 0.14);
+      osc.start(t + i * 0.12);
+      osc.stop(t + i * 0.12 + 0.16);
+    });
+  } catch(e) {}
+}
+</script>
+
+<a href="index.html?from=game" style="position:fixed;top:14px;left:14px;z-index:200;background:rgba(24,16,42,0.85);color:#c090b0;font-family:'Press Start 2P',monospace;font-size:0.42rem;border:1.5px solid #5a2855;border-radius:2px;padding:7px 14px;text-decoration:none;backdrop-filter:blur(8px);letter-spacing:1px;display:inline-flex;align-items:center;line-height:1;" onclick="event.preventDefault();playExitSound();setTimeout(()=>location.href='index.html?from=game',350);">← Arcade</a>
+
+<style>
+body.light-mode {
+  --bg: #fdf0f8;
+  --bg-card: #fff5fb;
+  --bg-card-2: #fce8f5;
+  --text: #2a0a1e;
+  --text-muted: #9a6888;
+  --border: #e8c8dc;
+  --border-bright: #d090b8;
+  background: #fdf0f8 !important;
+  background-image: none !important;
+}
+body.light-mode::before { opacity: 0.06 !important; }
+body.light-mode::after {
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px) !important;
+}
+#theme-toggle {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 300;
+  background: rgba(0,0,0,0.15);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s;
+  line-height: 1;
+  color: rgba(255,255,255,0.65);
+  opacity: 0.75;
+}
+#theme-toggle:hover { opacity: 1; }
+body.light-mode #theme-toggle {
+  background: rgba(255,255,255,0.35);
+  border-color: rgba(200,100,160,0.2);
+  color: rgba(42,10,30,0.6);
+}
+body.light-mode #theme-toggle:hover { opacity: 1; }
+</style>
+<button id="theme-toggle" onclick="toggleTheme()"></button>
+<script>
+const MOON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  document.getElementById('theme-toggle').innerHTML = isLight ? MOON_SVG : '☼';
+}
+if (localStorage.getItem('theme') === 'light') {
+  document.body.classList.add('light-mode');
+}
+document.getElementById('theme-toggle').innerHTML =
+  document.body.classList.contains('light-mode') ? MOON_SVG : '☼';
+function saveToLeaderboard(game, score) {
+  try {
+    const user = JSON.parse(localStorage.getItem('arcadeSession') || 'null');
+    if (!user) return;
+    db.collection('leaderboard').add({ name: user.name, game, score, date: new Date().toISOString() });
+  } catch(e) {}
+}
+</script>
+</body>
+</html>

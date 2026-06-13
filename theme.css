@@ -1,0 +1,184 @@
+/* =====================================================
+   SOFT MUTED PINK Y2K ARCADE — shared design tokens
+   ===================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+/* ---- Reset ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ---- Design tokens ---- */
+:root {
+  /* backgrounds */
+  --bg:          #0e0912;
+  --bg-card:     #18102a;
+  --bg-card-2:   #1e1432;
+  --bg-popup:    #130b1f;
+
+  /* pink spectrum (muted, never neon) */
+  --pink:        #e070a8;
+  --pink-mid:    #d490b8;
+  --pink-light:  #f0c0d8;
+  --pink-pale:   #fde8f4;
+
+  /* accents */
+  --lavender:    #c0a0e0;
+  --mint:        #88c0b0;
+  --gold:        #d8c070;
+  --silver:      #c8b8d8;
+  --coral:       #e09080;
+
+  /* text */
+  --text:        #f8e8f4;
+  --text-muted:  #c090b0;
+  --text-dim:    #907888;
+
+  /* borders */
+  --border:        #5a2855;
+  --border-bright: #b85888;
+
+  /* fonts */
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-body:  'Nunito', sans-serif;
+
+  /* soft diffuse glows */
+  --glow-pink:     0 0 28px rgba(220, 100, 160, 0.35);
+  --glow-lavender: 0 0 24px rgba(190, 150, 220, 0.28);
+  --glow-gold:     0 0 20px rgba(216, 192, 112, 0.30);
+}
+
+/* ---- Shared utilities ---- */
+
+/* CRT scanline overlay — add to body via ::after */
+.scanlines::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.07) 2px,
+    rgba(0, 0, 0, 0.07) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Shimmer lift — shared keyframe */
+@keyframes shimmer-sweep {
+  from { left: -80%; }
+  to   { left: 140%; }
+}
+
+/* Utility class for inline-styled buttons */
+.shimmer-btn {
+  position: relative !important;
+  overflow: hidden !important;
+}
+.shimmer-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -80%;
+  width: 55%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+  transform: skewX(-15deg);
+  pointer-events: none;
+  z-index: 1;
+}
+.shimmer-btn:hover { transform: translateY(-3px) !important; }
+.shimmer-btn:hover::before { animation: shimmer-sweep 0.5s ease forwards; }
+
+/* Pixel button */
+.pixel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, var(--pink), var(--lavender));
+  color: var(--bg);
+  font-family: var(--font-pixel);
+  font-size: 0.55rem;
+  letter-spacing: 1px;
+  padding: 10px 18px;
+  border: 2px solid var(--pink-light);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+  box-shadow: var(--glow-pink);
+  text-decoration: none;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+}
+.pixel-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -80%;
+  width: 55%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+  transform: skewX(-15deg);
+  pointer-events: none;
+  z-index: 1;
+}
+.pixel-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 36px rgba(220, 100, 160, 0.55), 0 6px 16px rgba(0,0,0,0.4);
+}
+.pixel-btn:hover::before { animation: shimmer-sweep 0.5s ease forwards; }
+
+/* Pixel tag */
+.pixel-tag {
+  font-family: var(--font-pixel);
+  font-size: 0.42rem;
+  padding: 5px 10px;
+  border: 2px solid var(--border-bright);
+  background: rgba(192, 160, 224, 0.15);
+  color: var(--pink-light);
+  letter-spacing: 0.5px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+/* Pixel badge */
+.pixel-badge {
+  font-family: var(--font-pixel);
+  font-size: 0.42rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border: 2px solid;
+  border-radius: 0;
+}
+
+.pixel-badge.playable {
+  background: var(--mint);
+  color: var(--bg);
+  border-color: var(--gold);
+  box-shadow: 0 0 10px rgba(136, 192, 176, 0.5);
+}
+
+.pixel-badge.soon {
+  background: var(--gold);
+  color: var(--bg);
+  border-color: var(--pink);
+  box-shadow: 0 0 10px rgba(216, 192, 112, 0.4);
+}
+
+/* Iridescent shimmer gradient (for special accents) */
+.iridescent {
+  background: linear-gradient(
+    120deg,
+    var(--pink-light),
+    var(--lavender),
+    var(--mint),
+    var(--pink-light)
+  );
+  background-size: 300% 100%;
+  animation: iridescent-shift 4s ease infinite;
+}
+
+@keyframes iridescent-shift {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}

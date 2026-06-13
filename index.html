@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title> RETRO ARCADE </title>
+<link rel="stylesheet" href="theme.css">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Silkscreen&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+const _fbCfg={apiKey:"AIzaSyAs4pZ-k8IPAAtk3dLM7Gy-oL4nLmOPN4g",authDomain:"retro-arcade-f61e1.firebaseapp.com",projectId:"retro-arcade-f61e1",storageBucket:"retro-arcade-f61e1.firebasestorage.app",messagingSenderId:"750905179148",appId:"1:750905179148:web:e27684e54bfd8e02680229"};
+if(!firebase.apps.length)firebase.initializeApp(_fbCfg);
+const db=firebase.firestore();
+</script>
+<style>
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(224, 112, 168, 0.025) 0px,
+      rgba(224, 112, 168, 0.025) 1px,
+      transparent 1px,
+      transparent 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(192, 160, 224, 0.018) 0px,
+      rgba(192, 160, 224, 0.018) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  color: var(--text);
+  min-height: 100vh;
+  padding: 88px 24px 80px;
+  overflow-x: hidden;
+}
+
+/* CRT scanlines */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.07) 2px,
+    rgba(0, 0, 0, 0.07) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Ambient orbs */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.28;
+  pointer-events: none;
+}
+.orb-1 { width: 520px; height: 520px; background: #c05888; top: -120px; left: -120px; animation: drift-1 14s ease-in-out infinite alternate; }
+.orb-2 { width: 420px; height: 420px; background: #8868c0; bottom: -90px; right: -90px; animation: drift-2 11s ease-in-out infinite alternate; }
+.orb-3 { width: 300px; height: 300px; background: #c088b0; top: 38%; left: 38%; animation: drift-3 18s ease-in-out infinite alternate; }
+.orb-4 { width: 220px; height: 220px; background: #6898c0; top: 10%; right: 12%; animation: drift-4 9s ease-in-out infinite alternate; opacity: 0.18; }
+.orb-5 { width: 180px; height: 180px; background: #b870a0; bottom: 20%; left: 8%; animation: drift-5 12s ease-in-out infinite alternate; opacity: 0.22; }
+
+@keyframes drift-1 {
+  0%   { transform: translate(0, 0) scale(1); }
+  40%  { transform: translate(70px, -40px) scale(1.1); }
+  100% { transform: translate(30px, 60px) scale(0.95); }
+}
+@keyframes drift-2 {
+  0%   { transform: translate(0, 0) scale(1); }
+  35%  { transform: translate(-60px, 40px) scale(1.12); }
+  100% { transform: translate(20px, -55px) scale(0.96); }
+}
+@keyframes drift-3 {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(-80px, 60px) scale(1.18); }
+  100% { transform: translate(60px, -50px) scale(0.88); }
+}
+@keyframes drift-4 {
+  0%   { transform: translate(0, 0) scale(1); }
+  60%  { transform: translate(-50px, 70px) scale(1.2); }
+  100% { transform: translate(30px, 20px) scale(0.9); }
+}
+@keyframes drift-5 {
+  0%   { transform: translate(0, 0) scale(1); }
+  45%  { transform: translate(60px, -50px) scale(1.15); }
+  100% { transform: translate(-30px, 40px) scale(1.05); }
+}
+
+/* Pixel stars — two layers for parallax feel */
+.stars {
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 15%, rgba(253,232,244,0.8), transparent),
+    radial-gradient(1px 1px at 70% 30%, rgba(192,160,224,0.7), transparent),
+    radial-gradient(1px 1px at 45% 70%, rgba(253,232,244,0.7), transparent),
+    radial-gradient(1px 1px at 85% 80%, rgba(136,192,176,0.6), transparent),
+    radial-gradient(1px 1px at 10% 55%, rgba(253,232,244,0.7), transparent),
+    radial-gradient(1px 1px at 60% 90%, rgba(192,160,224,0.55),transparent),
+    radial-gradient(2px 2px at 35% 40%, rgba(253,232,244,0.9), transparent),
+    radial-gradient(2px 2px at 90% 10%, rgba(253,232,244,0.8), transparent),
+    radial-gradient(1px 1px at 55%  5%, rgba(192,160,224,0.7), transparent),
+    radial-gradient(1px 1px at  5% 85%, rgba(253,232,244,0.6), transparent);
+  pointer-events: none;
+  animation: twinkle-a 5s ease-in-out infinite alternate;
+}
+.stars-2 {
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 33% 22%, rgba(253,232,244,0.6), transparent),
+    radial-gradient(1px 1px at 78% 48%, rgba(192,160,224,0.5), transparent),
+    radial-gradient(1px 1px at 15% 75%, rgba(216,192,112,0.45),transparent),
+    radial-gradient(1px 1px at 92% 62%, rgba(253,232,244,0.55),transparent),
+    radial-gradient(2px 2px at 50% 88%, rgba(192,160,224,0.65),transparent),
+    radial-gradient(1px 1px at 25% 45%, rgba(136,192,176,0.5), transparent),
+    radial-gradient(1px 1px at 67% 12%, rgba(253,232,244,0.6), transparent),
+    radial-gradient(1px 1px at  8% 32%, rgba(192,160,224,0.5), transparent);
+  pointer-events: none;
+  animation: twinkle-b 7s ease-in-out infinite alternate;
+}
+@keyframes twinkle-a {
+  from { opacity: 0.4; transform: translateY(0); }
+  to   { opacity: 1;   transform: translateY(-4px); }
+}
+@keyframes twinkle-b {
+  from { opacity: 0.6; transform: translateY(0); }
+  to   { opacity: 0.9; transform: translateY(6px); }
+}
+
+/* Shooting stars */
+.shoot-wrap {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+.shooting-star {
+  position: absolute;
+  height: 2px;
+  border-radius: 1px;
+  opacity: 0;
+  transform-origin: left center;
+}
+.s1 { width: 220px; top: 14%; left: -240px; background: linear-gradient(90deg, transparent, rgba(240,192,216,0.95), rgba(240,192,216,0.3), transparent); animation: shoot 11s linear 0.5s infinite; filter: drop-shadow(0 0 4px rgba(240,192,216,0.8)); }
+.s2 { width: 140px; top:  7%; left: -160px; background: linear-gradient(90deg, transparent, rgba(210,175,255,0.9),  rgba(210,175,255,0.25),transparent); animation: shoot 11s linear 4s   infinite; filter: drop-shadow(0 0 3px rgba(210,175,255,0.7)); }
+.s3 { width: 260px; top: 28%; left: -280px; background: linear-gradient(90deg, transparent, rgba(240,192,216,0.85), rgba(192,160,224,0.2), transparent); animation: shoot 11s linear 7s   infinite; filter: drop-shadow(0 0 5px rgba(220,160,200,0.7)); }
+.s4 { width: 180px; top: 42%; left: -200px; background: linear-gradient(90deg, transparent, rgba(192,160,224,0.9),  rgba(192,160,224,0.2), transparent); animation: shoot 11s linear 2s   infinite; filter: drop-shadow(0 0 4px rgba(192,160,224,0.7)); }
+.s5 { width: 110px; top:  3%; left: -130px; background: linear-gradient(90deg, transparent, rgba(248,210,230,0.85), rgba(248,210,230,0.2), transparent); animation: shoot 11s linear 9s   infinite; filter: drop-shadow(0 0 3px rgba(248,210,230,0.7)); }
+@keyframes shoot {
+  0%   { opacity: 0;   transform: translate(0, 0)           rotate(-26deg); }
+  4%   { opacity: 1; }
+  22%  { opacity: 0;   transform: translate(120vw, -30vw)   rotate(-26deg); }
+  100% { opacity: 0;   transform: translate(120vw, -30vw)   rotate(-26deg); }
+}
+
+
+/* Header */
+header {
+  text-align: center;
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.logo-icon {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, var(--pink), var(--lavender));
+  border-radius: 4px;
+  border: 3px solid var(--pink-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  box-shadow: var(--glow-pink), 0 8px 20px rgba(0,0,0,0.5);
+  animation: logo-pulse 3s ease-in-out infinite;
+}
+
+@keyframes logo-pulse {
+  0%, 100% { box-shadow: var(--glow-pink), 0 8px 20px rgba(0,0,0,0.5); transform: scale(1); }
+  50%       { box-shadow: 0 0 44px rgba(220,100,160,0.55), var(--glow-lavender), 0 12px 28px rgba(0,0,0,0.6); transform: scale(1.06); }
+}
+
+h1 {
+  font-family: var(--font-pixel);
+  font-size: 1.9rem;
+  line-height: 1.3;
+  background: linear-gradient(135deg, var(--pink-light), var(--lavender), var(--mint));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 2px;
+  filter: drop-shadow(0 0 10px rgba(220, 100, 160, 0.4));
+}
+
+.tagline {
+  font-family: var(--font-pixel);
+  color: var(--gold);
+  font-size: 0.5rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-top: 14px;
+  opacity: 0.85;
+}
+
+/* Stats bar */
+.stats-bar {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin-bottom: 52px;
+  position: relative;
+  z-index: 1;
+}
+
+.stat { text-align: center; }
+
+.stat-num {
+  font-family: var(--font-pixel);
+  font-size: 1.2rem;
+  background: linear-gradient(135deg, var(--lavender), var(--pink-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.4;
+}
+
+.stat-label {
+  font-family: var(--font-pixel);
+  font-size: 0.42rem;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--border);
+  align-self: center;
+}
+
+/* Section heading */
+.section-heading {
+  font-family: var(--font-pixel);
+  font-size: 0.48rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 4px;
+}
+
+.section-heading::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Game grid */
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  max-width: 900px;
+  margin: 0 auto 48px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Game card */
+.game-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+}
+
+.game-card:hover {
+  transform: translateY(-7px);
+  border-color: var(--pink-light);
+  box-shadow: var(--glow-pink), var(--glow-lavender), 0 14px 32px rgba(0,0,0,0.5);
+}
+
+.game-grid .game-card:nth-child(1) { border-color: #cc1166; }
+.game-grid .game-card:nth-child(2) { border-color: #0055cc; }
+.game-grid .game-card:nth-child(3) { border-color: #22cc44; }
+.game-grid .game-card:nth-child(4) { border-color: #cc5500; }
+.game-grid .game-card:nth-child(5) { border-color: #6611bb; }
+.game-grid .game-card:nth-child(6) { border-color: #009999; }
+
+.game-card.coming-soon {
+  cursor: default;
+  opacity: 0.55;
+}
+.game-card.coming-soon:hover {
+  transform: none;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+  border-color: var(--border);
+}
+
+/* Card preview */
+.card-preview {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.preview-hangman { background: linear-gradient(135deg, #18000c, #cc1166); }
+.preview-memory  { background: linear-gradient(135deg, #000420, #0055cc); }
+.preview-snake   { background: linear-gradient(135deg, #001508, #22cc44); }
+.preview-tetris  { background: linear-gradient(135deg, #1a0800, #cc5500); }
+.preview-slot    { background: linear-gradient(135deg, #0e0018, #6611bb); }
+.preview-pong    { background: linear-gradient(135deg, #001818, #009999); }
+
+/* Preview shimmer on hover */
+.game-card:not(.coming-soon):hover .card-preview::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(253,232,244,0.07) 50%, transparent 70%);
+  animation: shimmer 0.55s ease;
+}
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+.preview-icon {
+  font-size: 3.5rem;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.45));
+  transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+}
+.game-card:not(.coming-soon):hover .preview-icon {
+  transform: scale(1.15) rotate(-5deg);
+}
+
+
+/* Status badge */
+.status-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-family: var(--font-pixel);
+  font-size: 0.38rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 0;
+  border: 2px solid;
+}
+
+.badge-playable {
+  background: var(--mint);
+  color: var(--bg);
+  border-color: var(--gold);
+  box-shadow: 0 0 10px rgba(136, 192, 176, 0.5);
+}
+
+.badge-soon {
+  background: var(--gold);
+  color: var(--bg);
+  border-color: var(--pink);
+  box-shadow: 0 0 10px rgba(216, 192, 112, 0.4);
+}
+
+/* Card body */
+.card-body {
+  padding: 18px 20px 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-title {
+  font-family: var(--font-pixel);
+  font-size: 0.62rem;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--pink-light);
+  filter: drop-shadow(0 0 6px rgba(220,100,160,0.4));
+}
+
+.card-desc {
+  font-family: 'Silkscreen', monospace;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin-bottom: 16px;
+  flex: 1;
+  letter-spacing: 0.5px;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+
+.play-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, var(--pink), var(--lavender));
+  color: var(--bg);
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  padding: 9px 16px;
+  border-radius: 2px;
+  border: 2px solid var(--pink-light);
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 0 10px rgba(240,120,180,0.7), 0 0 22px rgba(220,100,160,0.45), inset 0 0 8px rgba(255,180,220,0.1);
+  letter-spacing: 1px;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.play-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 16px rgba(255,140,200,0.9), 0 0 40px rgba(220,80,160,0.7), 0 0 70px rgba(200,60,140,0.35), inset 0 0 12px rgba(255,180,220,0.15);
+}
+
+.play-btn svg {
+  width: 10px;
+  height: 10px;
+  fill: var(--bg);
+}
+
+
+/* Footer */
+footer {
+  text-align: center;
+  color: var(--text-muted);
+  font-family: var(--font-pixel);
+  font-size: 0.45rem;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Card entrance animations */
+.game-card {
+  animation: card-in 0.5s cubic-bezier(.34,1.56,.64,1) both;
+}
+.game-card:nth-child(1) { animation-delay: 0.05s; }
+.game-card:nth-child(2) { animation-delay: 0.12s; }
+.game-card:nth-child(3) { animation-delay: 0.19s; }
+.game-card:nth-child(4) { animation-delay: 0.26s; }
+.game-card:nth-child(5) { animation-delay: 0.33s; }
+.game-card:nth-child(6) { animation-delay: 0.40s; }
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(28px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Light mode ── */
+body.light-mode {
+  --bg: #fdf0f8;
+  --bg-card: #fff5fb;
+  --bg-card-2: #fce8f5;
+  --text: #2a0a1e;
+  --text-muted: #9a6888;
+  --border: #e8c8dc;
+  --border-bright: #d090b8;
+  background: #fdf0f8;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(180,80,130,0.06) 0px, rgba(180,80,130,0.06) 1px, transparent 1px, transparent 4px),
+    repeating-linear-gradient(90deg, rgba(160,100,200,0.04) 0px, rgba(160,100,200,0.04) 1px, transparent 1px, transparent 4px);
+}
+body.light-mode::after {
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
+}
+body.light-mode .orb { opacity: 0.07; }
+body.light-mode .stars, body.light-mode .stars-2 { opacity: 0.12; }
+body.light-mode .shoot-wrap { opacity: 0.18; }
+body.light-mode .game-card { box-shadow: 0 6px 18px rgba(160,80,120,0.1); }
+body.light-mode .game-card:hover { box-shadow: var(--glow-pink), 0 14px 32px rgba(160,80,120,0.15); }
+body.light-mode .stat-divider { background: #e8c8dc; }
+body.light-mode .section-heading::after { background: #e8c8dc; }
+body.light-mode #name-popup { background: rgba(253,240,248,0.97); }
+body.light-mode h1 {
+  background: linear-gradient(135deg, #b0006a, #7030b0, #308080);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 6px rgba(160,0,100,0.2));
+}
+body.light-mode #welcome-msg { color: #9a006a !important; filter: drop-shadow(0 0 4px rgba(160,0,100,0.2)) !important; }
+body.light-mode .card-title {
+  background: linear-gradient(135deg, #b0006a, #7030b0);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 4px rgba(140,0,90,0.15));
+}
+
+#theme-toggle {
+  position: fixed;
+  top: 14px; right: 14px;
+  z-index: 300;
+  background: rgba(0,0,0,0.15);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s;
+  line-height: 1;
+  color: rgba(255,255,255,0.65);
+  opacity: 0.75;
+}
+#theme-toggle:hover { opacity: 1; }
+body.light-mode #theme-toggle {
+  background: rgba(255,255,255,0.35);
+  border-color: rgba(200,100,160,0.2);
+  color: rgba(42,10,30,0.6);
+}
+body.light-mode #theme-toggle:hover { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+<div class="orb orb-4"></div>
+<div class="orb orb-5"></div>
+<div class="stars"></div>
+<div class="stars-2"></div>
+<div class="shoot-wrap">
+  <div class="shooting-star s1"></div>
+  <div class="shooting-star s2"></div>
+  <div class="shooting-star s3"></div>
+  <div class="shooting-star s4"></div>
+  <div class="shooting-star s5"></div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🕹️</div>
+    <h1>ARCADE</h1>
+  </div>
+  <p id="welcome-msg" style="font-family:var(--font-pixel);color:var(--pink-light);font-size:0.55rem;margin-top:14px;min-height:1.6em;letter-spacing:2px;filter:drop-shadow(0 0 8px rgba(220,100,160,0.5));"></p>
+</header>
+
+<div class="game-grid">
+
+  <!-- Hangman game card -->
+  <a class="game-card" href="hangman.html">
+    <div class="card-preview preview-hangman">
+      <span class="preview-icon">😵</span>
+    </div>
+    <div class="card-body">
+      <div class="card-title">😵 Hangman</div>
+      <div class="card-desc">Guess the hidden word letter by letter before the cute stick figure runs out of chances.</div>
+      <div class="card-footer">
+        <span class="play-btn">
+          <svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4V1z"/></svg>
+          Play
+        </span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Memory game card -->
+  <a class="game-card" href="memory.html">
+    <div class="card-preview preview-memory">
+      <span class="preview-icon">🃏</span>
+    </div>
+    <div class="card-body">
+      <div class="card-title">🃏 Memory Match</div>
+      <div class="card-desc">Flip emoji cards and find all 8 matching pairs. Race against the clock!</div>
+      <div class="card-footer">
+        <span class="play-btn">
+          <svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4V1z"/></svg>
+          Play
+        </span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Worm game card -->
+  <a class="game-card" href="worm.html">
+    <div class="card-preview preview-snake">
+      <span class="preview-icon">🪱</span>
+    </div>
+    <div class="card-body">
+      <div class="card-title">🪱 Worm Game</div>
+      <div class="card-desc">Eat the food, grow longer, and don't crash — with a rainbow trail, golden apples, and power-ups.</div>
+      <div class="card-footer">
+        <span class="play-btn">
+          <svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4V1z"/></svg>
+          Play
+        </span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Tetris game card -->
+  <a class="game-card" href="tetris.html">
+    <div class="card-preview preview-tetris">
+      <span class="preview-icon">🧱</span>
+    </div>
+    <div class="card-body">
+      <div class="card-title">🧱 Tetris</div>
+      <div class="card-desc">Stack falling blocks, clear lines, and survive as the pace ramps up.</div>
+      <div class="card-footer">
+        <span class="play-btn">
+          <svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4V1z"/></svg>
+          Play
+        </span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Plinko game card -->
+  <a class="game-card" href="plinko.html">
+    <div class="card-preview preview-slot">
+      <span class="preview-icon">🎯</span>
+    </div>
+    <div class="card-body">
+      <div class="card-title">🎯 Plinko</div>
+      <div class="card-desc">Drop balls through a peg board and watch physics do the work. Aim for the big prize!</div>
+      <div class="card-footer">
+        <span class="play-btn">
+          <svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4V1z"/></svg>
+          Play
+        </span>
+      </div>
+    </div>
+  </a>
+
+  <!-- 2048 game card -->
+  <a class="game-card" href="2048.html">
+    <div class="card-preview preview-pong">
+      <span class="preview-icon">🔢</span>
+    </div>
+    <div class="card-body">
+      <div class="card-title">🔢 2048</div>
+      <div class="card-desc">Slide and merge numbered tiles to reach 2048. Easier said than done!</div>
+      <div class="card-footer">
+        <span class="play-btn">
+          <svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4V1z"/></svg>
+          Play
+        </span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Runner game card -->
+  <a class="game-card" href="runner.html" style="border-color:#cc8800;">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a1200,#cc8800);">
+      <span class="preview-icon">🦕</span>
+    </div>
+    <div class="card-body">
+      <div class="card-title">🦕 Runner</div>
+      <div class="card-desc">Jump over obstacles, dodge birds, and run as far as you can. Don't stop!</div>
+      <div class="card-footer">
+        <span class="play-btn">
+          <svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4V1z"/></svg>
+          Play
+        </span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Tic-Tac-Toe game card -->
+  <a class="game-card" href="tictactoe.html" style="border-color:#cc2020;">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a0000,#cc2020);">
+      <span class="preview-icon">🅾️</span>
+    </div>
+    <div class="card-body">
+      <div class="card-title">🅾️ Tic-Tac-Toe</div>
+      <div class="card-desc">Classic 3×3 X and O battle. Play a friend or take on the unbeatable CPU!</div>
+      <div class="card-footer">
+        <span class="play-btn">
+          <svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4V1z"/></svg>
+          Play
+        </span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Countdown game card -->
+  <a class="game-card" href="countdown.html" style="border-color:#bb0099;">
+    <div class="card-preview" style="background:linear-gradient(135deg,#180014,#bb0099);">
+      <span class="preview-icon">🧮</span>
+    </div>
+    <div class="card-body">
+      <div class="card-title">🧮 Countdown</div>
+      <div class="card-desc">Use six numbers and basic maths to hit the target before the clock runs out.</div>
+      <div class="card-footer">
+        <span class="play-btn">
+          <svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4V1z"/></svg>
+          Play
+        </span>
+      </div>
+    </div>
+  </a>
+
+</div>
+
+<footer>🕹️ arcade presented by gru</footer>
+
+<!-- Auth popup -->
+<div id="auth-popup" style="position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(14,9,18,0.97);">
+  <div style="background:linear-gradient(160deg,#1e1035,#110920);border:2px solid #c060a0;border-radius:4px;max-width:360px;width:92%;position:relative;overflow:hidden;box-shadow:0 0 60px rgba(180,60,140,0.45),0 0 28px rgba(140,90,200,0.3),0 30px 60px rgba(0,0,0,0.8);">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#e060b8,#a888e0,#e060b8,transparent);"></div>
+
+    <!-- Logo -->
+    <div style="text-align:center;padding:26px 32px 0;">
+      <div style="font-size:1.9rem;margin-bottom:8px;">🕹️</div>
+      <div style="font-family:var(--font-pixel);font-size:0.72rem;letter-spacing:3px;background:linear-gradient(135deg,#f880cc,#c8a0f0,#80d0e0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 10px rgba(220,80,180,0.6));">ARCADE</div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;margin:18px 32px 0;border-bottom:2px solid #5a2855;">
+      <button id="tab-signin" onclick="switchTab('signin')" style="flex:1;background:none;border:none;border-bottom:2px solid #e070a8;margin-bottom:-2px;padding:10px 0;font-family:var(--font-pixel);font-size:0.36rem;letter-spacing:1.5px;color:#f0c0d8;cursor:pointer;transition:all 0.2s;">SIGN IN</button>
+      <button id="tab-create" onclick="switchTab('create')" style="flex:1;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;padding:10px 0;font-family:var(--font-pixel);font-size:0.36rem;letter-spacing:1.5px;color:#9878b8;cursor:pointer;transition:all 0.2s;">CREATE ACCOUNT</button>
+    </div>
+
+    <!-- Sign In form -->
+    <div id="form-signin" style="padding:22px 32px 28px;display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <div style="font-family:var(--font-pixel);color:#9878b8;font-size:0.27rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">Display Name</div>
+        <input id="si-name" type="text" maxlength="20" placeholder="your name…" autocomplete="username"
+          style="width:100%;background:#1a1030;border:2px solid #8848a8;border-radius:2px;color:#f0c8e8;font-family:var(--font-pixel);font-size:0.48rem;padding:10px 14px;outline:none;letter-spacing:1px;transition:border-color 0.2s;box-shadow:inset 0 0 10px rgba(100,40,120,0.25);"
+          onfocus="this.style.borderColor='#f0c0d8'" onblur="this.style.borderColor='#8848a8'">
+      </div>
+      <div>
+        <div style="font-family:var(--font-pixel);color:#9878b8;font-size:0.27rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">Password</div>
+        <div style="position:relative;">
+          <input id="si-pass" type="password" placeholder="••••••••" autocomplete="current-password"
+            style="width:100%;background:#1a1030;border:2px solid #8848a8;border-radius:2px;color:#f0c8e8;font-family:var(--font-pixel);font-size:0.48rem;padding:10px 42px 10px 14px;outline:none;letter-spacing:2px;transition:border-color 0.2s;box-shadow:inset 0 0 10px rgba(100,40,120,0.25);"
+            onfocus="this.style.borderColor='#f0c0d8'" onblur="this.style.borderColor='#8848a8'"
+            onkeydown="if(event.key==='Enter')doSignIn()">
+          <button type="button" onclick="togglePass('si-pass',this)" title="Show/hide password"
+            style="position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:#9878b8;line-height:0;transition:color 0.2s;"
+            onmouseover="this.style.color='#f0c0d8'" onmouseout="this.style.color='#9878b8'">
+            <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="si-error" style="font-family:var(--font-pixel);font-size:0.29rem;color:#e09080;letter-spacing:1px;display:none;padding-top:2px;min-height:1em;"></div>
+      <button onclick="doSignIn()"
+        style="background:linear-gradient(135deg,#c840a0,#9858d8);color:#fff;font-family:var(--font-pixel);font-size:0.46rem;border:2px solid #e070c8;border-radius:2px;padding:12px;cursor:pointer;width:100%;box-shadow:0 0 24px rgba(200,60,160,0.5);transition:all 0.15s;letter-spacing:1px;text-transform:uppercase;"
+        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 0 40px rgba(200,60,160,0.7)'"
+        onmouseout="this.style.transform='';this.style.boxShadow='0 0 24px rgba(200,60,160,0.5)'">SIGN IN →</button>
+    </div>
+
+    <!-- Create Account form -->
+    <div id="form-create" style="display:none;padding:22px 32px 28px;flex-direction:column;gap:12px;">
+      <div>
+        <div style="font-family:var(--font-pixel);color:#9878b8;font-size:0.27rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">Display Name</div>
+        <input id="ca-name" type="text" maxlength="20" placeholder="your name…" autocomplete="username"
+          style="width:100%;background:#1a1030;border:2px solid #8848a8;border-radius:2px;color:#f0c8e8;font-family:var(--font-pixel);font-size:0.48rem;padding:10px 14px;outline:none;letter-spacing:1px;transition:border-color 0.2s;box-shadow:inset 0 0 10px rgba(100,40,120,0.25);"
+          onfocus="this.style.borderColor='#f0c0d8'" onblur="this.style.borderColor='#8848a8'">
+      </div>
+      <div>
+        <div style="font-family:var(--font-pixel);color:#9878b8;font-size:0.27rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">Password</div>
+        <div style="position:relative;">
+          <input id="ca-pass" type="password" placeholder="••••••••" autocomplete="new-password"
+            style="width:100%;background:#1a1030;border:2px solid #8848a8;border-radius:2px;color:#f0c8e8;font-family:var(--font-pixel);font-size:0.48rem;padding:10px 42px 10px 14px;outline:none;letter-spacing:2px;transition:border-color 0.2s;box-shadow:inset 0 0 10px rgba(100,40,120,0.25);"
+            onfocus="this.style.borderColor='#f0c0d8'" onblur="this.style.borderColor='#8848a8'">
+          <button type="button" onclick="togglePass('ca-pass',this)" title="Show/hide password"
+            style="position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:#9878b8;line-height:0;transition:color 0.2s;"
+            onmouseover="this.style.color='#f0c0d8'" onmouseout="this.style.color='#9878b8'">
+            <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-pixel);color:#9878b8;font-size:0.27rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">Confirm Password</div>
+        <div style="position:relative;">
+          <input id="ca-pass2" type="password" placeholder="••••••••" autocomplete="new-password"
+            style="width:100%;background:#1a1030;border:2px solid #8848a8;border-radius:2px;color:#f0c8e8;font-family:var(--font-pixel);font-size:0.48rem;padding:10px 42px 10px 14px;outline:none;letter-spacing:2px;transition:border-color 0.2s;box-shadow:inset 0 0 10px rgba(100,40,120,0.25);"
+            onfocus="this.style.borderColor='#f0c0d8'" onblur="this.style.borderColor='#8848a8'"
+            onkeydown="if(event.key==='Enter')doCreateAccount()">
+          <button type="button" onclick="togglePass('ca-pass2',this)" title="Show/hide password"
+            style="position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:#9878b8;line-height:0;transition:color 0.2s;"
+            onmouseover="this.style.color='#f0c0d8'" onmouseout="this.style.color='#9878b8'">
+            <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="ca-error" style="font-family:var(--font-pixel);font-size:0.29rem;color:#e09080;letter-spacing:1px;display:none;padding-top:2px;min-height:1em;"></div>
+      <button onclick="doCreateAccount()"
+        style="background:linear-gradient(135deg,#c840a0,#9858d8);color:#fff;font-family:var(--font-pixel);font-size:0.46rem;border:2px solid #e070c8;border-radius:2px;padding:12px;cursor:pointer;width:100%;box-shadow:0 0 24px rgba(200,60,160,0.5);transition:all 0.15s;letter-spacing:1px;text-transform:uppercase;"
+        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 0 40px rgba(200,60,160,0.7)'"
+        onmouseout="this.style.transform='';this.style.boxShadow='0 0 24px rgba(200,60,160,0.5)'">CREATE ACCOUNT →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Leaderboard modal -->
+<div id="lb-modal" style="display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;background:rgba(14,9,18,0.93);">
+  <div style="background:linear-gradient(160deg,#1e1035,#110920);border:2px solid #c060a0;border-radius:4px;max-width:500px;width:93%;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(180,60,140,0.45),0 30px 60px rgba(0,0,0,0.8);position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#e060b8,#a888e0,#e060b8,transparent);"></div>
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:2px solid #5a2855;flex-shrink:0;">
+      <div style="font-family:var(--font-pixel);font-size:0.62rem;letter-spacing:2px;background:linear-gradient(135deg,#f880cc,#c8a0f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">🏆 LEADERBOARD</div>
+      <button onclick="closeLB()" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;transition:color 0.2s;" onmouseover="this.style.color='#f0c0d8'" onmouseout="this.style.color='#9878b8'">✕</button>
+    </div>
+    <!-- Game filter tabs -->
+    <div id="lb-game-tabs" style="display:flex;overflow-x:auto;border-bottom:2px solid #5a2855;flex-shrink:0;scrollbar-width:none;-webkit-overflow-scrolling:touch;"></div>
+    <!-- Entries list -->
+    <div id="lb-entries" style="overflow-y:auto;padding:0;flex:1;"></div>
+  </div>
+</div>
+
+<!-- User menu (top-left, shown after login) -->
+<div id="user-menu-wrap" style="display:none;position:fixed;top:14px;left:14px;z-index:300;">
+  <button id="user-menu-btn" onclick="toggleUserMenu()"
+    style="background:rgba(0,0,0,0.2);border:1.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 12px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:rgba(240,192,216,0.85);cursor:pointer;backdrop-filter:blur(8px);transition:all 0.2s;display:flex;align-items:center;gap:6px;"
+    onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.75'">
+    <span id="user-menu-label">👤 </span>▾
+  </button>
+  <div id="user-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#1e1035;border:2px solid #5a2855;border-radius:4px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,0.6);overflow:hidden;">
+    <button onclick="openLB()" style="display:block;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">🏆 Leaderboard</button>
+    <button onclick="doSignOut()" style="display:block;width:100%;background:none;border:none;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#c090b0;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.08)'" onmouseout="this.style.background='none'">Sign Out</button>
+  </div>
+</div>
+
+<button id="theme-toggle" onclick="toggleTheme()" style="display:none"></button>
+
+<script>
+  /* ── Utilities ── */
+  const EYE_OPEN = `<svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  const EYE_SHUT = `<svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
+  function togglePass(inputId, btn) {
+    const inp = document.getElementById(inputId);
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.innerHTML = show ? EYE_SHUT : EYE_OPEN;
+    btn.style.color = show ? '#f0c0d8' : '#9878b8';
+  }
+
+  /* ── Tab switching ── */
+  function switchTab(tab) {
+    const isSignin = tab === 'signin';
+    document.getElementById('tab-signin').style.borderBottomColor = isSignin ? '#e070a8' : 'transparent';
+    document.getElementById('tab-signin').style.color = isSignin ? '#f0c0d8' : '#9878b8';
+    document.getElementById('tab-create').style.borderBottomColor = isSignin ? 'transparent' : '#e070a8';
+    document.getElementById('tab-create').style.color = isSignin ? '#9878b8' : '#f0c0d8';
+    document.getElementById('form-signin').style.display = isSignin ? 'flex' : 'none';
+    const ca = document.getElementById('form-create');
+    ca.style.display = isSignin ? 'none' : 'flex';
+    ca.style.flexDirection = 'column';
+    clearErrors();
+  }
+
+  function clearErrors() {
+    ['si-error','ca-error'].forEach(id => { const el = document.getElementById(id); el.style.display='none'; el.textContent=''; });
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  /* ── localStorage auth store ── */
+  function getUsers() { try { return JSON.parse(localStorage.getItem('arcadeUsers') || '[]'); } catch { return []; } }
+  function saveUsers(u) { localStorage.setItem('arcadeUsers', JSON.stringify(u)); }
+  function getSession() { try { return JSON.parse(localStorage.getItem('arcadeSession') || 'null'); } catch { return null; } }
+  function saveSession(u) { localStorage.setItem('arcadeSession', JSON.stringify(u)); }
+
+  /* ── Auth actions ── */
+  function doSignIn() {
+    const name = document.getElementById('si-name').value.trim();
+    const pass = document.getElementById('si-pass').value;
+    if (!name || !pass) { showError('si-error', 'fill in all fields'); return; }
+    const users = getUsers();
+    const user  = users.find(u => u.name.toLowerCase() === name.toLowerCase() && u.password === pass);
+    if (!user) { showError('si-error', 'wrong name or password'); return; }
+    saveSession(user);
+    playLetsPlaySound();
+    onLogin(user);
+  }
+
+  function doCreateAccount() {
+    const name  = document.getElementById('ca-name').value.trim();
+    const pass  = document.getElementById('ca-pass').value;
+    const pass2 = document.getElementById('ca-pass2').value;
+    if (!name || !pass || !pass2) { showError('ca-error', 'fill in all fields'); return; }
+    if (pass !== pass2) { showError('ca-error', 'passwords do not match'); return; }
+    if (pass.length < 6) { showError('ca-error', 'password too short (6+ chars)'); return; }
+    const users = getUsers();
+    if (users.find(u => u.name.toLowerCase() === name.toLowerCase())) { showError('ca-error', 'name already taken'); return; }
+    const user = { name, password: pass };
+    users.push(user);
+    saveUsers(users);
+    saveSession(user);
+    playLetsPlaySound();
+    onLogin(user);
+  }
+
+  function doSignOut() {
+    localStorage.removeItem('arcadeSession');
+    document.getElementById('user-dropdown').style.display = 'none';
+    document.getElementById('user-menu-wrap').style.display = 'none';
+    document.getElementById('theme-toggle').style.display = 'none';
+    document.getElementById('auth-popup').style.display = 'flex';
+    document.getElementById('welcome-msg').textContent = '';
+    document.getElementById('si-name').value = '';
+    document.getElementById('si-pass').value = '';
+    switchTab('signin');
+  }
+
+  function onLogin(user) {
+    document.getElementById('auth-popup').style.display = 'none';
+    document.getElementById('theme-toggle').style.display = '';
+    document.getElementById('user-menu-wrap').style.display = '';
+    document.getElementById('user-menu-label').textContent = '👤 ' + user.name;
+    const msg = document.getElementById('welcome-msg');
+    msg.textContent = `Welcome back, ${user.name}! 👋`;
+    msg.style.animation = 'none';
+    void msg.offsetWidth;
+    msg.style.animation = 'fade-up 0.5s ease both';
+  }
+
+  /* ── User menu dropdown ── */
+  function toggleUserMenu() {
+    const dd = document.getElementById('user-dropdown');
+    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+  }
+  document.addEventListener('click', e => {
+    if (!document.getElementById('user-menu-wrap').contains(e.target)) {
+      document.getElementById('user-dropdown').style.display = 'none';
+    }
+  });
+
+  /* ── Audio ── */
+  function playClickSound() {
+    try {
+      const actx = new (window.AudioContext || window.webkitAudioContext)();
+      const t = actx.currentTime;
+      [523, 659, 784].forEach((freq, i) => {
+        const osc = actx.createOscillator(), gain = actx.createGain();
+        osc.connect(gain); gain.connect(actx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, t + i * 0.07);
+        gain.gain.setValueAtTime(0.13, t + i * 0.07);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.1);
+        osc.start(t + i * 0.07); osc.stop(t + i * 0.07 + 0.12);
+      });
+    } catch(e) {}
+  }
+
+  function playLetsPlaySound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const t = ctx.currentTime;
+      [523, 659, 784, 1047].forEach((freq, i) => {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t + i * 0.08);
+        gain.gain.setValueAtTime(0.13, t + i * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.18);
+        osc.start(t + i * 0.08); osc.stop(t + i * 0.08 + 0.2);
+      });
+    } catch(e) {}
+  }
+
+  /* ── Game card clicks ── */
+  document.querySelectorAll('.game-card:not(.coming-soon)').forEach(card => {
+    card.addEventListener('click', function(e) {
+      e.preventDefault();
+      playClickSound();
+      const href = this.href;
+      setTimeout(() => location.href = href, 260);
+    });
+  });
+
+  /* ── Leaderboard ── */
+  const GAME_LABELS = {
+    hangman: '😵 Hangman', memory: '🃏 Memory', worm: '🪱 Worm', tetris: '🧱 Tetris',
+    plinko: '🎯 Plinko', '2048': '🔢 2048', runner: '🦕 Runner', tictactoe: '🅾️ Tic-Tac-Toe',
+    countdown: '🧮 Countdown'
+  };
+  let lbActiveGame = 'all';
+
+  async function getLBData() {
+    const snap = await db.collection('leaderboard').orderBy('score', 'desc').limit(200).get();
+    return snap.docs.map(d => d.data());
+  }
+
+  async function openLB() {
+    document.getElementById('user-dropdown').style.display = 'none';
+    document.getElementById('lb-modal').style.display = 'flex';
+    document.getElementById('lb-game-tabs').innerHTML = '';
+    document.getElementById('lb-entries').innerHTML = '<div style="text-align:center;padding:40px;font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;letter-spacing:2px;">LOADING...</div>';
+    await renderLB();
+  }
+
+  function closeLB() {
+    document.getElementById('lb-modal').style.display = 'none';
+  }
+
+  async function renderLB() {
+    const data = await getLBData();
+    const games = ['all', ...new Set(data.map(e => e.game))];
+    const tabsEl = document.getElementById('lb-game-tabs');
+    tabsEl.innerHTML = games.map(g => {
+      const label = g === 'all' ? '⭐ ALL' : (GAME_LABELS[g] || g);
+      const active = g === lbActiveGame;
+      return `<button onclick="setLBGame('${g}')" style="flex-shrink:0;background:none;border:none;border-bottom:2px solid ${active ? '#e070a8' : 'transparent'};margin-bottom:-2px;padding:10px 16px;font-family:var(--font-pixel);font-size:0.3rem;letter-spacing:1px;color:${active ? '#f0c0d8' : '#9878b8'};cursor:pointer;white-space:nowrap;transition:all 0.2s;">${label}</button>`;
+    }).join('');
+
+    const filtered = lbActiveGame === 'all' ? data : data.filter(e => e.game === lbActiveGame);
+    const sorted = [...filtered].sort((a, b) => b.score - a.score).slice(0, 50);
+
+    const entriesEl = document.getElementById('lb-entries');
+    if (!sorted.length) {
+      entriesEl.innerHTML = `<div style="text-align:center;padding:40px 20px;font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;letter-spacing:2px;line-height:2;">NO SCORES YET<br><span style="font-size:0.3rem;color:#5a2855;">play a game to get on the board!</span></div>`;
+      return;
+    }
+
+    entriesEl.innerHTML = sorted.map((e, i) => {
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span style="font-family:var(--font-pixel);font-size:0.32rem;color:#9878b8;min-width:22px;display:inline-block;text-align:center;">${i+1}</span>`;
+      const date = e.date ? new Date(e.date).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '';
+      const gameLbl = lbActiveGame === 'all' ? `<span style="font-size:0.28rem;color:#c090b0;margin-left:6px;">${GAME_LABELS[e.game] || e.game}</span>` : '';
+      const isTop = i < 3;
+      return `<div style="display:flex;align-items:center;gap:14px;padding:12px 22px;border-bottom:1px solid #2a1840;background:${isTop ? 'rgba(224,112,168,0.06)' : 'none'};transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.09)'" onmouseout="this.style.background='${isTop ? 'rgba(224,112,168,0.06)' : 'none'}'">
+        <span style="min-width:28px;text-align:center;font-size:${i<3?'1.1':'0.9'}rem;">${medal}</span>
+        <span style="flex:1;font-family:var(--font-pixel);font-size:0.36rem;color:#f0c0d8;letter-spacing:1px;">${escHtml(e.name)}${gameLbl}</span>
+        <span style="font-family:var(--font-pixel);font-size:0.4rem;color:#d8c070;letter-spacing:1px;">${e.score.toLocaleString()}</span>
+        <span style="font-family:var(--font-pixel);font-size:0.27rem;color:#9878b8;min-width:48px;text-align:right;">${date}</span>
+      </div>`;
+    }).join('');
+  }
+
+  async function setLBGame(g) {
+    lbActiveGame = g;
+    document.getElementById('lb-entries').innerHTML = '<div style="text-align:center;padding:40px;font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;letter-spacing:2px;">LOADING...</div>';
+    await renderLB();
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /* close lb on backdrop click */
+  document.getElementById('lb-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeLB();
+  });
+
+  /* ── Init ── */
+  const session = getSession();
+  if (session) {
+    onLogin(session);
+  } else {
+    setTimeout(() => document.getElementById('si-name').focus(), 120);
+  }
+
+  /* ── Theme ── */
+  const MOON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-mode');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    document.getElementById('theme-toggle').innerHTML = isLight ? MOON_SVG : '☼';
+  }
+  if (!localStorage.getItem('theme')) localStorage.setItem('theme', 'dark');
+  if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
+  document.getElementById('theme-toggle').innerHTML = document.body.classList.contains('light-mode') ? MOON_SVG : '☼';
+</script>
+
+<style>
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  #lb-game-tabs::-webkit-scrollbar { display: none; }
+  #lb-entries::-webkit-scrollbar { width: 4px; }
+  #lb-entries::-webkit-scrollbar-track { background: transparent; }
+  #lb-entries::-webkit-scrollbar-thumb { background: #5a2855; border-radius: 2px; }
+</style>
+
+</body>
+</html>

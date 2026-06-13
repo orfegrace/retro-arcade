@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔢 2048</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    gap: 16px;
+    padding: 20px;
+    user-select: none;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+  h1 {
+    font-family: var(--font-pixel);
+    font-size: 1.1rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--pink-light), var(--lavender), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(220, 100, 160, 0.35));
+  }
+  .top-bar { display: flex; gap: 12px; align-items: center; }
+  .score-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 18px;
+    text-align: center;
+    min-width: 90px;
+  }
+  .score-lbl { font-family: var(--font-pixel); font-size: 0.38rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+  .score-val { font-family: var(--font-pixel); font-size: 1.1rem; color: var(--gold); }
+  .new-btn {
+    background: linear-gradient(135deg, var(--pink), var(--lavender));
+    color: var(--bg);
+    font-family: var(--font-pixel);
+    font-size: 0.45rem;
+    border: 2px solid var(--pink-light);
+    border-radius: 2px;
+    padding: 9px 16px;
+    cursor: pointer;
+    box-shadow: var(--glow-pink);
+    transition: transform 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .new-btn:hover { transform: translateY(-1px); }
+
+  .board-wrap {
+    position: relative;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: var(--glow-lavender), 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .grid-bg {
+    display: grid;
+    grid-template-columns: repeat(4, 100px);
+    grid-template-rows: repeat(4, 100px);
+    gap: 10px;
+  }
+  .cell-bg { background: rgba(255,255,255,0.03); border-radius: 4px; }
+  .tiles-layer {
+    position: absolute; inset: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 100px);
+    grid-template-rows: repeat(4, 100px);
+    gap: 10px;
+    pointer-events: none;
+  }
+  .tile {
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900;
+    position: absolute; width: 100px; height: 100px;
+    transition: left 0.14s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                top  0.14s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  @keyframes tile-new   { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+  .tile-new { animation: tile-new 0.18s cubic-bezier(.34,1.56,.64,1) both; }
+  .tile.merged { animation: tile-merge 0.22s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes tile-merge { 0%{transform:scale(1)} 45%{transform:scale(1.22)} 100%{transform:scale(1)} }
+
+  /* Tile colors — lower tiles keep original warm palette, higher go theme */
+  .t-2    { background:#fef3c7; color:#92400e; font-size:2.2rem; }
+  .t-4    { background:#fde68a; color:#78350f; font-size:2.2rem; }
+  .t-8    { background:#fbbf24; color:#fff;    font-size:2.2rem; }
+  .t-16   { background:#f97316; color:#fff;    font-size:2rem; }
+  .t-32   { background:#ef4444; color:#fff;    font-size:2rem; }
+  .t-64   { background:#dc2626; color:#fff;    font-size:2rem; box-shadow:0 0 20px rgba(220,38,38,0.5); }
+  .t-128  { background:#c0a0e0; color:#0e0912; font-size:1.7rem; box-shadow:0 0 24px rgba(192,160,224,0.5); }
+  .t-256  { background:#a878c8; color:#fff;    font-size:1.7rem; box-shadow:0 0 24px rgba(168,120,200,0.5); }
+  .t-512  { background:#e070a8; color:#fff;    font-size:1.7rem; box-shadow:0 0 24px rgba(224,112,168,0.5); }
+  .t-1024 { background:#d490b8; color:#fff;    font-size:1.4rem; box-shadow:0 0 28px rgba(212,144,184,0.6); }
+  .t-2048 { background:linear-gradient(135deg,var(--pink-light),var(--lavender),var(--mint)); color:#0e0912; font-size:1.4rem; box-shadow:0 0 40px rgba(224,112,168,0.7); }
+  .t-high { background:linear-gradient(135deg,var(--mint),var(--lavender)); color:#fff; font-size:1.2rem; }
+
+  #overlay {
+    position: fixed; inset: 0;
+    background: rgba(14,9,18,0.93);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14px; backdrop-filter: blur(10px); z-index: 10;
+  }
+  #overlay.hidden { display: none; }
+  .ov-emoji { font-size: 3.8rem; animation: wobble 2s ease infinite alternate; }
+  @keyframes wobble { from{transform:rotate(-7deg)scale(1)} to{transform:rotate(7deg)scale(1.1)} }
+  .ov-title {
+    font-family: var(--font-pixel);
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, var(--pink-light), var(--lavender));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .ov-sub { font-family: var(--font-pixel); color: var(--text-muted); font-size: 0.42rem; text-align: center; }
+  .ov-prompt {
+    font-family: var(--font-pixel);
+    font-size: 0.42rem; color: var(--text-muted);
+    letter-spacing: 2px; text-transform: uppercase; margin-top: 6px;
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .hint { font-family: var(--font-pixel); font-size: 0.38rem; color: var(--text-muted); margin-top: -4px; }
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+const _fbCfg={apiKey:"AIzaSyAs4pZ-k8IPAAtk3dLM7Gy-oL4nLmOPN4g",authDomain:"retro-arcade-f61e1.firebaseapp.com",projectId:"retro-arcade-f61e1",storageBucket:"retro-arcade-f61e1.firebasestorage.app",messagingSenderId:"750905179148",appId:"1:750905179148:web:e27684e54bfd8e02680229"};
+if(!firebase.apps.length)firebase.initializeApp(_fbCfg);
+const db=firebase.firestore();
+</script>
+</head>
+<body>
+
+<h1>🔢 2048</h1>
+
+<div class="top-bar">
+  <div class="score-box"><div class="score-lbl">Score</div><div class="score-val" id="score">0</div></div>
+  <div class="score-box"><div class="score-lbl">Best</div><div class="score-val" id="best">0</div></div>
+</div>
+
+<div class="board-wrap">
+  <div class="grid-bg" id="grid-bg"></div>
+  <div class="tiles-layer" id="tiles-layer"></div>
+</div>
+
+<p class="hint">Arrow keys or swipe to play</p>
+
+<div id="overlay">
+  <div class="ov-emoji" id="ov-emoji">🔢</div>
+  <div class="ov-title" id="ov-title">2048</div>
+  <div class="ov-sub" id="ov-sub">Merge tiles to reach 2048!</div>
+  <div class="ov-prompt" id="ov-prompt">Press any arrow key to start</div>
+  <div id="ov-buttons" style="display:none;gap:10px;margin-top:4px;">
+    <button class="shimmer-btn" onclick="playAgainSound();newGame()" style="background:linear-gradient(135deg,#e070a8,#c0a0e0);color:#0e0912;font-family:'Press Start 2P',monospace;font-size:0.52rem;border:2px solid #f0c0d8;border-radius:2px;padding:12px 22px;cursor:pointer;letter-spacing:1px;transition:transform 0.15s;">Play Again</button>
+    <a class="shimmer-btn" href="index.html?from=game" onclick="event.preventDefault();playExitSound();setTimeout(()=>location.href='index.html?from=game',350);" style="background:rgba(192,160,224,0.08);color:#f8e8f4;font-family:'Press Start 2P',monospace;font-size:0.52rem;border:2px solid #b85888;border-radius:2px;padding:12px 22px;text-decoration:none;display:inline-flex;align-items:center;transition:transform 0.15s;">Exit</a>
+  </div>
+</div>
+
+<script>
+const overlay = document.getElementById('overlay');
+const tilesLayer = document.getElementById('tiles-layer');
+
+const SIZE = 4, GAP = 10, CELL = 100;
+const SLIDE_MS = 140; // must match CSS transition duration
+
+let tiles = [], nextId = 0;
+let score = 0, best = 0, state = 'idle', won = false, moving = false;
+
+const bg = document.getElementById('grid-bg');
+for (let i = 0; i < 16; i++) {
+  const d = document.createElement('div'); d.className = 'cell-bg'; bg.appendChild(d);
+}
+
+function cellPos(r, c) { return { left: c * (CELL + GAP), top: r * (CELL + GAP) }; }
+function tileClass(v)  { return v <= 2048 ? `t-${v}` : 't-high'; }
+
+function makeTile(v, r, c, isNew) {
+  const tile = { id: nextId++, v, r, c };
+  const el = document.createElement('div');
+  const p = cellPos(r, c);
+  el.style.left = p.left + 'px';
+  el.style.top  = p.top  + 'px';
+  el.className  = `tile ${tileClass(v)}${isNew ? ' tile-new' : ''}`;
+  el.textContent = v;
+  tilesLayer.appendChild(el);
+  tile.el = el;
+  tiles.push(tile);
+  return tile;
+}
+
+function getBoardArr() {
+  const b = Array.from({length: SIZE}, () => Array(SIZE).fill(0));
+  tiles.forEach(t => b[t.r][t.c] = t.v);
+  return b;
+}
+
+function addRandomTile(animate) {
+  const b = getBoardArr(), empty = [];
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (!b[r][c]) empty.push([r,c]);
+  if (!empty.length) return;
+  const [r,c] = empty[Math.floor(Math.random() * empty.length)];
+  makeTile(Math.random() < 0.85 ? 2 : 4, r, c, animate);
+}
+
+function newGame() {
+  tiles.forEach(t => t.el.remove());
+  tiles = []; score = 0; won = false; moving = false;
+  document.getElementById('score').textContent = 0;
+  addRandomTile(true); addRandomTile(true);
+  overlay.classList.add('hidden');
+  state = 'playing';
+}
+
+// Slide a line of tiles toward index 0 (caller reverses for right/down).
+// Mutates tile.r / tile.c; returns array of merge records.
+function processLine(line, getPos, setPos, isReverse) {
+  const sorted = [...line].sort((a, b) => isReverse ? getPos(b) - getPos(a) : getPos(a) - getPos(b));
+  let dest = isReverse ? SIZE - 1 : 0;
+  const step = isReverse ? -1 : 1;
+  let lastTile = null, lastV = null, lastDest = null, canMerge = true;
+  const merges = [];
+  for (const t of sorted) {
+    if (canMerge && lastTile && t.v === lastV) {
+      setPos(t, lastDest);
+      merges.push({ from: t, into: lastTile, newV: t.v * 2 });
+      canMerge = false; lastTile = null; lastV = null;
+    } else {
+      setPos(t, dest);
+      lastDest = dest; lastV = t.v; lastTile = t;
+      dest += step; canMerge = true;
+    }
+  }
+  return merges;
+}
+
+function move(dir) {
+  if (state !== 'playing' || moving) return;
+
+  const before = tiles.map(t => ({ id: t.id, r: t.r, c: t.c }));
+  const merges = [];
+
+  if (dir === 'left' || dir === 'right') {
+    const rev = dir === 'right';
+    for (let r = 0; r < SIZE; r++)
+      merges.push(...processLine(tiles.filter(t => t.r === r), t => t.c, (t,v) => t.c = v, rev));
+  } else {
+    const rev = dir === 'down';
+    for (let c = 0; c < SIZE; c++)
+      merges.push(...processLine(tiles.filter(t => t.c === c), t => t.r, (t,v) => t.r = v, rev));
+  }
+
+  const changed = before.some(b => { const t = tiles.find(x => x.id === b.id); return t && (t.r !== b.r || t.c !== b.c); });
+  if (!changed && !merges.length) return;
+  playSlide();
+
+  score += merges.reduce((s, m) => s + m.newV, 0);
+  document.getElementById('score').textContent = score;
+  if (score > best) { best = score; document.getElementById('best').textContent = best; }
+
+  // Update DOM positions → CSS transitions fire
+  tiles.forEach(t => {
+    const p = cellPos(t.r, t.c);
+    t.el.style.left = p.left + 'px';
+    t.el.style.top  = p.top  + 'px';
+  });
+  // Merging tiles slide on top so they're visible during the slide
+  merges.forEach(m => { m.from.el.style.zIndex = 5; });
+
+  moving = true;
+
+  setTimeout(() => {
+    if (merges.length) playMerge(Math.max(...merges.map(m => m.newV)));
+    merges.forEach(({ from, into, newV }) => {
+      from.el.remove();
+      tiles = tiles.filter(t => t !== from);
+      into.v = newV;
+      into.el.className = `tile ${tileClass(newV)} merged`;
+      into.el.textContent = newV;
+      into.el.style.zIndex = '';
+      setTimeout(() => into.el.classList.remove('merged'), 250);
+    });
+
+    addRandomTile(true);
+    moving = false;
+
+    if (!won && tiles.some(t => t.v === 2048)) {
+      won = true;
+      setTimeout(playWinSound, 300);
+      setTimeout(() => showOverlay('🎉', 'You reached 2048!', 'Keep going for a higher score!'), 300);
+      return;
+    }
+    if (!canMove()) {
+      state = 'dead';
+      setTimeout(playLoseSound, 300);
+      setTimeout(() => showOverlay('😢', 'Game Over', `Final score: ${score}`), 300);
+    }
+  }, SLIDE_MS + 20);
+}
+
+function canMove() {
+  const b = getBoardArr();
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+    if (!b[r][c]) return true;
+    if (c < SIZE-1 && b[r][c] === b[r][c+1]) return true;
+    if (r < SIZE-1 && b[r][c] === b[r+1][c]) return true;
+  }
+  return false;
+}
+
+function showOverlay(emoji, title, sub) {
+  saveToLeaderboard('2048', score);
+  document.getElementById('ov-emoji').textContent = emoji;
+  document.getElementById('ov-title').textContent = title;
+  document.getElementById('ov-sub').textContent   = sub;
+  document.getElementById('ov-prompt').textContent = '';
+  document.getElementById('ov-buttons').style.display = 'flex';
+  overlay.classList.remove('hidden');
+}
+
+document.addEventListener('keydown', e => {
+  const map = { ArrowLeft:'left', ArrowRight:'right', ArrowUp:'up', ArrowDown:'down' };
+  if (map[e.key]) {
+    e.preventDefault();
+    if (state === 'idle') { overlay.classList.add('hidden'); document.getElementById('ov-buttons').style.display='none'; state='playing'; newGame(); return; }
+    move(map[e.key]);
+  }
+  if (e.key === 'n' || e.key === 'N') newGame();
+});
+
+let tx0, ty0;
+document.addEventListener('touchstart', e => { tx0=e.touches[0].clientX; ty0=e.touches[0].clientY; }, {passive:true});
+document.addEventListener('touchend', e => {
+  const dx=e.changedTouches[0].clientX-tx0, dy=e.changedTouches[0].clientY-ty0;
+  if (Math.max(Math.abs(dx),Math.abs(dy))<30) return;
+  if (Math.abs(dx)>Math.abs(dy)) move(dx>0?'right':'left');
+  else move(dy>0?'down':'up');
+}, {passive:true});
+
+function playSlide() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(220, t);
+    osc.frequency.exponentialRampToValueAtTime(130, t + 0.06);
+    g.gain.setValueAtTime(0.06, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    osc.start(t); osc.stop(t + 0.09);
+  } catch(e) {}
+}
+
+function playMerge(value) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = ctx.currentTime;
+    const freq = 200 * Math.pow(1.14, Math.log2(value));
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, t);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.6, t + 0.05);
+    g.gain.setValueAtTime(0.1, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    osc.start(t); osc.stop(t + 0.12);
+  } catch(e) {}
+}
+
+function playWinSound() {
+  try {
+    const actx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime;
+    [523, 659, 784, 1047].forEach((freq, i) => {
+      const osc = actx.createOscillator(), g = actx.createGain();
+      osc.connect(g); g.connect(actx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, t + i * 0.08);
+      g.gain.setValueAtTime(0.12, t + i * 0.08);
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.12);
+      osc.start(t + i * 0.08); osc.stop(t + i * 0.08 + 0.14);
+    });
+  } catch(e) {}
+}
+
+function playLoseSound() {
+  try {
+    const actx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime;
+    [392, 311, 196].forEach((freq, i) => {
+      const osc = actx.createOscillator(), g = actx.createGain();
+      osc.connect(g); g.connect(actx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, t + i * 0.13);
+      g.gain.setValueAtTime(0.12, t + i * 0.13);
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.13 + 0.16);
+      osc.start(t + i * 0.13); osc.stop(t + i * 0.13 + 0.18);
+    });
+  } catch(e) {}
+}
+
+function playAgainSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const t = ctx.currentTime;
+  [523, 659, 784].forEach((freq, i) => {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, t + i * 0.07);
+    gain.gain.setValueAtTime(0.13, t + i * 0.07);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.1);
+    osc.start(t + i * 0.07); osc.stop(t + i * 0.07 + 0.12);
+  });
+}
+function playExitSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = ctx.currentTime;
+    [660, 330].forEach((freq, i) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, t + i * 0.12);
+      g.gain.setValueAtTime(0.0, t + i * 0.12);
+      g.gain.linearRampToValueAtTime(0.1, t + i * 0.12 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.12 + 0.14);
+      osc.start(t + i * 0.12);
+      osc.stop(t + i * 0.12 + 0.16);
+    });
+  } catch(e) {}
+}
+</script>
+
+<a href="index.html?from=game" style="position:fixed;top:14px;left:14px;z-index:200;background:rgba(24,16,42,0.85);color:#c090b0;font-family:'Press Start 2P',monospace;font-size:0.42rem;border:1.5px solid #5a2855;border-radius:2px;padding:7px 14px;text-decoration:none;backdrop-filter:blur(8px);letter-spacing:1px;display:inline-flex;align-items:center;line-height:1;" onclick="event.preventDefault();playExitSound();setTimeout(()=>location.href='index.html?from=game',350);">← Arcade</a>
+
+<style>
+body.light-mode {
+  --bg: #fdf0f8;
+  --bg-card: #fff5fb;
+  --bg-card-2: #fce8f5;
+  --text: #2a0a1e;
+  --text-muted: #9a6888;
+  --border: #e8c8dc;
+  --border-bright: #d090b8;
+  background: #fdf0f8 !important;
+  background-image: none !important;
+}
+body.light-mode::before { opacity: 0.06 !important; }
+body.light-mode::after {
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px) !important;
+}
+#theme-toggle {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 300;
+  background: rgba(0,0,0,0.15);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s;
+  line-height: 1;
+  color: rgba(255,255,255,0.65);
+  opacity: 0.75;
+}
+#theme-toggle:hover { opacity: 1; }
+body.light-mode #theme-toggle {
+  background: rgba(255,255,255,0.35);
+  border-color: rgba(200,100,160,0.2);
+  color: rgba(42,10,30,0.6);
+}
+body.light-mode #theme-toggle:hover { opacity: 1; }
+</style>
+<button id="theme-toggle" onclick="toggleTheme()"></button>
+<script>
+const MOON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  document.getElementById('theme-toggle').innerHTML = isLight ? MOON_SVG : '☼';
+}
+if (localStorage.getItem('theme') === 'light') {
+  document.body.classList.add('light-mode');
+}
+document.getElementById('theme-toggle').innerHTML =
+  document.body.classList.contains('light-mode') ? MOON_SVG : '☼';
+function saveToLeaderboard(game, score) {
+  try {
+    const user = JSON.parse(localStorage.getItem('arcadeSession') || 'null');
+    if (!user) return;
+    db.collection('leaderboard').add({ name: user.name, game, score, date: new Date().toISOString() });
+  } catch(e) {}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Runner</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+
+/* inspired by the Chrome dino game */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  gap: 14px;
+  padding: 24px;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+  pointer-events: none; z-index: 9999;
+}
+h1 {
+  font-family: var(--font-pixel);
+  font-size: 1rem;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, var(--pink-light), var(--lavender), var(--mint));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 8px rgba(220,100,160,0.35));
+}
+canvas {
+  border: 2px solid var(--border-bright);
+  border-radius: 4px;
+  background: #0e0912;
+  image-rendering: pixelated;
+  display: block;
+  max-width: 100%;
+}
+.hint {
+  font-family: var(--font-pixel);
+  font-size: 0.38rem;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+const _fbCfg={apiKey:"AIzaSyAs4pZ-k8IPAAtk3dLM7Gy-oL4nLmOPN4g",authDomain:"retro-arcade-f61e1.firebaseapp.com",projectId:"retro-arcade-f61e1",storageBucket:"retro-arcade-f61e1.firebasestorage.app",messagingSenderId:"750905179148",appId:"1:750905179148:web:e27684e54bfd8e02680229"};
+if(!firebase.apps.length)firebase.initializeApp(_fbCfg);
+const db=firebase.firestore();
+</script>
+</head>
+<body>
+
+<h1>🦕 RUNNER</h1>
+<canvas id="c" width="700" height="220"></canvas>
+<p class="hint">SPACE / TAP TO JUMP &nbsp;·&nbsp; ↓ TO DUCK</p>
+
+<div id="game-over-overlay" style="display:none;position:fixed;inset:0;background:rgba(14,9,18,0.92);flex-direction:column;align-items:center;justify-content:center;gap:14px;backdrop-filter:blur(10px);z-index:10;">
+  <div style="font-size:3rem;animation:wobble 1.2s ease-in-out infinite alternate;">😵</div>
+  <div style="font-family:var(--font-pixel);font-size:1rem;background:linear-gradient(135deg,var(--pink-light),var(--lavender));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">GAME OVER</div>
+  <div id="ov-score" style="font-family:var(--font-pixel);color:var(--text-muted);font-size:0.42rem;letter-spacing:2px;text-align:center;line-height:1.8;"></div>
+  <div style="display:flex;gap:10px;margin-top:6px;">
+    <button class="shimmer-btn" onclick="playAgainSound();restartGame()" style="background:linear-gradient(135deg,var(--pink),var(--lavender));color:var(--bg);font-family:var(--font-pixel);font-size:0.48rem;border:2px solid var(--pink-light);border-radius:2px;padding:10px 20px;cursor:pointer;box-shadow:var(--glow-pink);letter-spacing:1px;text-transform:uppercase;transition:transform 0.15s;">Play Again</button>
+    <a class="shimmer-btn" href="index.html?from=game" onclick="event.preventDefault();playExitSound();setTimeout(()=>location.href='index.html?from=game',350);" style="background:rgba(192,160,224,0.08);color:var(--pink-light);font-family:var(--font-pixel);font-size:0.48rem;border:2px solid var(--border-bright);border-radius:2px;padding:10px 20px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;text-decoration:none;display:inline-flex;align-items:center;transition:transform 0.15s;">Exit</a>
+  </div>
+</div>
+<style>@keyframes wobble { from{transform:rotate(-8deg)scale(1)} to{transform:rotate(8deg)scale(1.1)} }</style>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+const GH = 175;
+const PINK = '#f472b6', LAVEN = '#c4b5fd', MINT = '#88c0b0', DIM = '#4a2060', MUTED = '#7a5888';
+
+const dino = { x: 72, y: GH, w: 26, h: 28, vy: 0, ducking: false, onGround: true };
+let obstacles = [], score = 0, best = +localStorage.getItem('rn_best') || 0;
+let speed = 5, frame = 0, state = 'idle';
+let nextSpawn = 80;
+let isNight = true, sceneFrames = 0, dayness = 0;
+let rafId = null;
+const SCENE_FRAMES = 15 * 60;
+const TRANSITION_RATE = 1 / 90; // cross-fade over ~1.5 s
+
+function reset() {
+  dino.y = GH; dino.vy = 0; dino.ducking = false; dino.onGround = true;
+  obstacles = []; score = 0; speed = 5; frame = 0; nextSpawn = 80; state = 'running';
+  sceneFrames = 0; // dayness/isNight persist across restarts
+  if (!rafId) rafId = requestAnimationFrame(loop);
+}
+
+function playJump() {
+  try {
+    const actx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime;
+    const osc = actx.createOscillator(), g = actx.createGain();
+    osc.connect(g); g.connect(actx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(300, t);
+    osc.frequency.exponentialRampToValueAtTime(620, t + 0.09);
+    osc.frequency.setValueAtTime(420, t + 0.09);
+    g.gain.setValueAtTime(0.16, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+    osc.start(t); osc.stop(t + 0.2);
+  } catch(e) {}
+}
+
+function playAgainSound() {
+  try {
+    const actx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime;
+    [523, 659, 784].forEach((freq, i) => {
+      const osc = actx.createOscillator(), gain = actx.createGain();
+      osc.connect(gain); gain.connect(actx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, t + i * 0.07);
+      gain.gain.setValueAtTime(0.13, t + i * 0.07);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.1);
+      osc.start(t + i * 0.07); osc.stop(t + i * 0.07 + 0.12);
+    });
+  } catch(e) {}
+}
+
+function restartGame() {
+  document.getElementById('game-over-overlay').style.display = 'none';
+  reset();
+}
+
+function showGameOver() {
+  saveToLeaderboard('runner', score);
+  document.getElementById('ov-score').textContent = `Score: ${score}  ·  Best: ${best}`;
+  document.getElementById('game-over-overlay').style.display = 'flex';
+}
+
+function tryJump() {
+  if (state === 'dead') return;
+  if (state === 'idle') { reset(); return; }
+  if (dino.onGround) { dino.vy = -13.5; dino.onGround = false; playJump(); }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); tryJump(); }
+  if (e.code === 'ArrowDown') dino.ducking = true;
+});
+document.addEventListener('keyup', e => { if (e.code === 'ArrowDown') dino.ducking = false; });
+canvas.addEventListener('pointerdown', () => tryJump());
+
+function spawnObstacle() {
+  if (Math.random() < 0.55) {
+    const h = 30 + Math.floor(Math.random() * 30);
+    obstacles.push({ x: canvas.width + 10, y: GH, w: 18, h, type: 'cactus' });
+  } else {
+    const birdY = Math.random() < 0.5 ? GH - 55 : GH - 20;
+    obstacles.push({ x: canvas.width + 10, y: birdY, w: 36, h: 18, type: 'bird' });
+  }
+}
+
+function hits(o) {
+  const dh = dino.ducking ? 14 : dino.h;
+  const dy = dino.y - dh;
+  const oy = o.y - o.h;
+  const p = 5;
+  return !(dino.x + dino.w - p < o.x + p || dino.x + p > o.x + o.w - p ||
+           dy + dh - p < oy + p || dy + p > oy + o.h - p);
+}
+
+function drawDino() {
+  const dh = dino.ducking ? 14 : dino.h;
+  const dy = dino.y - dh;
+  ctx.fillStyle = PINK;
+  ctx.fillRect(dino.x, dy, dino.w, dh);
+  if (!dino.ducking) {
+    ctx.fillRect(dino.x + 8, dy - 11, 18, 13);
+    ctx.fillStyle = '#0e0912';
+    ctx.fillRect(dino.x + 20, dy - 9, 3, 3);
+    ctx.fillStyle = PINK;
+  }
+  const l = Math.floor(frame / 7) % 2;
+  ctx.fillStyle = '#d050a0';
+  if (dino.onGround || dino.ducking) {
+    ctx.fillRect(dino.x + 4, dino.y, 6, l ? 8 : 5);
+    ctx.fillRect(dino.x + 14, dino.y, 6, l ? 5 : 8);
+  } else {
+    ctx.fillRect(dino.x + 4, dino.y - 4, 6, 7);
+    ctx.fillRect(dino.x + 14, dino.y - 4, 6, 7);
+  }
+  ctx.fillStyle = '#b04090';
+  ctx.fillRect(dino.x - 7, dy + 5, 8, 7);
+}
+
+function drawObstacle(o) {
+  if (o.type === 'cactus') {
+    ctx.fillStyle = LAVEN;
+    ctx.fillRect(o.x, o.y - o.h, o.w, o.h);
+    ctx.fillStyle = '#a090d0';
+    ctx.fillRect(o.x - 8, o.y - o.h * 0.6, 8, o.h * 0.3);
+    ctx.fillRect(o.x + o.w, o.y - o.h * 0.45, 8, o.h * 0.25);
+  } else {
+    const wing = Math.floor(frame / 9) % 2;
+    ctx.fillStyle = MINT;
+    ctx.fillRect(o.x, o.y - o.h, o.w, o.h);
+    ctx.fillStyle = '#60a898';
+    ctx.fillRect(o.x + 6, o.y - o.h - (wing ? 8 : 3), o.w - 12, 8);
+    ctx.fillStyle = '#f8d060';
+    ctx.fillRect(o.x + o.w, o.y - o.h + 4, 8, 4);
+  }
+}
+
+function lerpHex(a, b, t) {
+  const p = (s, o) => parseInt(s.slice(o, o+2), 16);
+  return `rgb(${Math.round(p(a,1)+(p(b,1)-p(a,1))*t)},${Math.round(p(a,3)+(p(b,3)-p(a,3))*t)},${Math.round(p(a,5)+(p(b,5)-p(a,5))*t)})`;
+}
+
+function drawBg() {
+  drawNightBg();
+  if (dayness > 0) {
+    ctx.globalAlpha = dayness;
+    drawDayBg();
+    ctx.globalAlpha = 1;
+  }
+  // Horizon glow peaks at midpoint of each transition
+  if (dayness > 0.03 && dayness < 0.97) {
+    const glow = Math.sin(dayness * Math.PI);
+    const dawn = !isNight; // true = going to day
+    const ga = glow * (dawn ? 0.6 : 0.5);
+    const [gr, gg, gb] = dawn ? [255, 140, 40] : [160, 60, 210];
+    const hg = ctx.createLinearGradient(0, GH + 2, 0, GH - 90);
+    hg.addColorStop(0, `rgba(${gr},${gg},${gb},${ga})`);
+    hg.addColorStop(1, `rgba(${gr},${gg},${gb},0)`);
+    ctx.fillStyle = hg;
+    ctx.fillRect(0, GH - 90, canvas.width, 92);
+  }
+}
+
+function drawGround() {
+  ctx.fillStyle = lerpHex(MUTED, '#a87050', dayness);
+  ctx.fillRect(0, GH + 2, canvas.width, 2);
+  ctx.fillStyle = lerpHex(DIM, '#7a5038', dayness);
+  const offset = (frame * speed * 0.4) % 24;
+  for (let x = -offset; x < canvas.width; x += 24) ctx.fillRect(x, GH + 8, 14, 2);
+}
+
+function drawNightBg() {
+  ctx.fillStyle = '#0e0912';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // moon
+  ctx.fillStyle = '#fdecd0';
+  ctx.fillRect(558, 18, 22, 22);
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.fillRect(562, 22, 4, 4);
+  ctx.fillRect(568, 28, 3, 3);
+  // stars
+  ctx.fillStyle = 'rgba(255,200,230,0.55)';
+  [[80,30],[200,52],[350,18],[490,42],[610,28],[150,65],[430,60]].forEach(([x,y]) => {
+    if (Math.sin(frame * 0.05 + x) > 0.5) ctx.fillRect(x, y, 2, 2);
+  });
+}
+
+function drawDayBg() {
+  const grad = ctx.createLinearGradient(0, 0, 0, GH);
+  grad.addColorStop(0, '#88c0e8');
+  grad.addColorStop(0.55, '#f8d070');
+  grad.addColorStop(1, '#f8a848');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, GH + 2);
+  ctx.fillStyle = '#1a0820';
+  ctx.fillRect(0, GH + 2, canvas.width, canvas.height - GH - 2);
+  // sun
+  ctx.fillStyle = '#fcd840';
+  ctx.fillRect(58, 26, 28, 28);
+  ctx.fillStyle = 'rgba(252,216,64,0.35)';
+  ctx.fillRect(50, 36, 8, 8); ctx.fillRect(86, 36, 8, 8);
+  ctx.fillRect(68, 18, 8, 8); ctx.fillRect(68, 54, 8, 8);
+  // clouds
+  ctx.fillStyle = 'rgba(255,255,255,0.82)';
+  const co = (frame * 0.5) % canvas.width;
+  [[60,42],[290,28],[510,50],[730,36]].forEach(([bx, by]) => {
+    const x = (bx - co + canvas.width * 2) % canvas.width;
+    ctx.fillRect(x, by, 56, 10);
+    ctx.fillRect(x + 10, by - 8, 36, 10);
+  });
+}
+
+function px(text, x, y, size, color) {
+  ctx.font = `${size}px "Press Start 2P", monospace`;
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y);
+}
+
+function loop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBg();
+  drawGround();
+
+  if (state === 'running') {
+    frame++;
+
+    // Scene cycle
+    sceneFrames++;
+    if (sceneFrames >= SCENE_FRAMES) {
+      sceneFrames = 0;
+      isNight = !isNight;
+    }
+    const _td = isNight ? 0 : 1;
+    const _dd = _td - dayness;
+    dayness += Math.sign(_dd) * Math.min(Math.abs(_dd), TRANSITION_RATE);
+
+    // Physics
+    dino.vy += 0.72;
+    dino.y += dino.vy;
+    if (dino.y >= GH) { dino.y = GH; dino.vy = 0; dino.onGround = true; }
+
+    // Smooth speed ramp — reaches ~18 around score 2600
+    speed = Math.min(18, 5 + score / 200);
+
+    nextSpawn--;
+    if (nextSpawn <= 0) {
+      spawnObstacle();
+      nextSpawn = 50 + Math.floor(Math.random() * 70);
+    }
+
+    obstacles.forEach(o => o.x -= speed);
+    obstacles = obstacles.filter(o => o.x > -60);
+
+    score++;
+    if (score > best) { best = score; localStorage.setItem('rn_best', best); }
+
+    if (obstacles.some(hits)) { state = 'dead'; playDie(); setTimeout(showGameOver, 50); }
+  }
+
+  obstacles.forEach(drawObstacle);
+  drawDino();
+
+  // HUD — adapt color for day scene readability (crossfade at midpoint)
+  const hudPink = dayness < 0.5 ? PINK : '#c02878';
+  const hudMute = dayness < 0.5 ? MUTED : '#7a4458';
+  const msgCol  = dayness < 0.5 ? '#c0a0d0' : '#4a1850';
+  ctx.textAlign = 'right';
+  px(`${score}`, canvas.width - 10, 22, 9, hudPink);
+  px(`HI ${best}`, canvas.width - 10, 38, 7, hudMute);
+  ctx.textAlign = 'left';
+
+  if (state === 'idle') {
+    ctx.textAlign = 'center';
+    px('PRESS SPACE TO START', canvas.width / 2, canvas.height / 2, 8, msgCol);
+    ctx.textAlign = 'left';
+  }
+
+  // Stop the loop when dead; reset() will restart it
+  if (state !== 'dead') {
+    rafId = requestAnimationFrame(loop);
+  } else {
+    rafId = null;
+  }
+}
+
+function playDie() {
+  try {
+    const actx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime;
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.connect(g); g.connect(actx.destination);
+    o.type = 'square';
+    o.frequency.setValueAtTime(440, t);
+    o.frequency.exponentialRampToValueAtTime(110, t + 0.3);
+    g.gain.setValueAtTime(0.15, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    o.start(t); o.stop(t + 0.4);
+  } catch(e){}
+}
+
+rafId = requestAnimationFrame(loop);
+</script>
+
+<style>
+body.light-mode {
+  --bg: #fdf0f8; --bg-card: #fff5fb; --text: #2a0a1e; --text-muted: #9a6888;
+  --border: #e8c8dc; --border-bright: #d090b8;
+  background: #fdf0f8 !important; background-image: none !important;
+}
+body.light-mode::after { background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px) !important; }
+body.light-mode h1 {
+  background: linear-gradient(135deg, #b0006a, #7030b0, #207878);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 6px rgba(140,0,90,0.15));
+}
+body.light-mode .hint { color: #6a3858; }
+body.light-mode canvas { border-color: #c070a0; }
+#theme-toggle {
+  position: fixed; top: 14px; right: 14px; z-index: 300;
+  background: rgba(0,0,0,0.15); border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 8px; padding: 6px 10px; font-size: 1rem; cursor: pointer;
+  backdrop-filter: blur(8px); transition: background 0.2s, color 0.2s, opacity 0.2s; line-height: 1; color: rgba(255,255,255,0.65); opacity: 0.75;
+}
+#theme-toggle:hover { opacity: 1; }
+body.light-mode #theme-toggle { background: rgba(255,255,255,0.35); border-color: rgba(200,100,160,0.2); color: rgba(42,10,30,0.6); }
+body.light-mode #theme-toggle:hover { opacity: 1; }
+</style>
+<button id="theme-toggle" onclick="toggleTheme()"></button>
+<script>
+const MOON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  document.getElementById('theme-toggle').innerHTML = isLight ? MOON_SVG : '☼';
+}
+if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
+document.getElementById('theme-toggle').innerHTML = document.body.classList.contains('light-mode') ? MOON_SVG : '☼';
+function saveToLeaderboard(game, score) {
+  try {
+    const user = JSON.parse(localStorage.getItem('arcadeSession') || 'null');
+    if (!user) return;
+    db.collection('leaderboard').add({ name: user.name, game, score, date: new Date().toISOString() });
+  } catch(e) {}
+}
+</script>
+<a href="index.html?from=game" style="position:fixed;top:14px;left:14px;z-index:200;background:rgba(24,16,42,0.85);color:#c090b0;font-family:'Press Start 2P',monospace;font-size:0.42rem;border:1.5px solid #5a2855;border-radius:2px;padding:7px 14px;text-decoration:none;backdrop-filter:blur(8px);letter-spacing:1px;display:inline-flex;align-items:center;line-height:1;" onclick="event.preventDefault();playExitSound();setTimeout(()=>location.href='index.html?from=game',350);">← Arcade</a>
+<script>
+function playExitSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = ctx.currentTime;
+    [660, 330].forEach((freq, i) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, t + i * 0.12);
+      g.gain.setValueAtTime(0.0, t + i * 0.12);
+      g.gain.linearRampToValueAtTime(0.1, t + i * 0.12 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.12 + 0.14);
+      osc.start(t + i * 0.12);
+      osc.stop(t + i * 0.12 + 0.16);
+    });
+  } catch(e) {}
+}
+</script>
+</body>
+</html>

@@ -1025,11 +1025,6 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   };
   let lbActiveGame = 'all';
 
-  async function getLBData() {
-    const snap = await db.collection('leaderboard').orderBy('score', 'desc').limit(200).get();
-    return snap.docs.map(d => d.data());
-  }
-
   async function openLB() {
     document.getElementById('user-dropdown').style.display = 'none';
     document.getElementById('lb-modal').style.display = 'flex';
@@ -1043,8 +1038,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   }
 
   async function renderLB() {
-    const data = await getLBData();
-    const games = ['all', ...new Set(data.map(e => e.game))];
+    const games = ['all', ...Object.keys(GAME_LABELS)];
     const tabsEl = document.getElementById('lb-game-tabs');
     tabsEl.innerHTML = games.map(g => {
       const label = g === 'all' ? '⭐ ALL' : (GAME_LABELS[g] || g);
@@ -1052,8 +1046,21 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
       return `<button onclick="setLBGame('${g}')" style="flex-shrink:0;background:none;border:none;border-bottom:2px solid ${active ? '#e070a8' : 'transparent'};margin-bottom:-2px;padding:10px 16px;font-family:var(--font-pixel);font-size:0.3rem;letter-spacing:1px;color:${active ? '#f0c0d8' : '#9878b8'};cursor:pointer;white-space:nowrap;transition:all 0.2s;">${label}</button>`;
     }).join('');
 
-    const filtered = lbActiveGame === 'all' ? data : data.filter(e => e.game === lbActiveGame);
-    const sorted = [...filtered].sort((a, b) => b.score - a.score).slice(0, 50);
+    let sorted;
+    try {
+      let snap;
+      if (lbActiveGame === 'all') {
+        snap = await db.collection('leaderboard').orderBy('score', 'desc').limit(500).get();
+        sorted = snap.docs.map(d => d.data()).slice(0, 50);
+      } else {
+        snap = await db.collection('leaderboard').where('game', '==', lbActiveGame).limit(500).get();
+        sorted = snap.docs.map(d => d.data()).sort((a, b) => b.score - a.score).slice(0, 50);
+      }
+    } catch(e) {
+      console.error('[Leaderboard] fetch failed:', e);
+      document.getElementById('lb-entries').innerHTML = `<div style="text-align:center;padding:40px 20px;font-family:var(--font-pixel);font-size:0.38rem;color:#e09080;letter-spacing:2px;">FAILED TO LOAD<br><span style="font-size:0.3rem;color:#9878b8;">check console for details</span></div>`;
+      return;
+    }
 
     const entriesEl = document.getElementById('lb-entries');
     if (!sorted.length) {

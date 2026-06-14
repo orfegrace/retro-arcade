@@ -153,7 +153,7 @@ const db=firebase.firestore();
 <div id="overlay">
   <div class="ov-emoji" id="ov-emoji">🎯</div>
   <div class="ov-title" id="ov-title">Plinko!</div>
-  <div class="ov-sub" id="ov-sub">Drop 10 balls through the peg board.<br>Aim for the middle for the big prize!</div>
+  <div class="ov-sub" id="ov-sub">Drop 10 balls through the peg board.<br>Aim for the edges for the big prize!</div>
   <div class="ov-prompt" id="ov-prompt">Click to play</div>
   <div id="ov-buttons">
     <button class="ov-btn" onclick="playAgainSound();resetGame()">Play Again</button>
@@ -185,8 +185,8 @@ for (let row = 0; row < PEG_ROWS; row++) {
 }
 
 // Slot values and colors
-const SLOT_PTS  = [50, 100, 200, 500, 2000, 500, 200, 100, 50];
-const SLOT_CLRS = ['#64748b','#3b82f6','#22c55e','#f59e0b','#c026d3','#f59e0b','#22c55e','#3b82f6','#64748b'];
+const SLOT_PTS  = [2000, 500, 200, 100, 50, 100, 200, 500, 2000];
+const SLOT_CLRS = ['#c026d3','#f59e0b','#22c55e','#3b82f6','#64748b','#3b82f6','#22c55e','#f59e0b','#c026d3'];
 
 // State
 let score = 0, bestScore = 0, ballsLeft = 10, state = 'idle';

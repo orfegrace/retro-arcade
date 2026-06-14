@@ -160,6 +160,7 @@ const db=firebase.firestore();
   <div class="win-emoji">🎉</div>
   <div class="win-title">All matched!</div>
   <div class="win-sub" id="win-sub"></div>
+  <div id="win-score" style="font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;letter-spacing:1px;margin-top:2px;"></div>
   <div style="display:flex;gap:10px;margin-top:6px;">
     <button class="btn" onclick="playAgainSound();newGame()">Play Again</button>
     <a href="index.html?from=game" class="btn" onclick="playExitSound()" style="background:rgba(255,255,255,0.1);color:#f0c0d8;box-shadow:none;border:2px solid rgba(255,255,255,0.2);text-decoration:none;">Exit</a>
@@ -266,8 +267,10 @@ function startTimer() {
 
 function win() {
   clearInterval(timerInterval);
-  saveToLeaderboard('memory', Math.max(0, 1000 - moves * 17 - secs * 3) + Math.max(0, 60 - secs) * 11);
+  const memScore = Math.max(0, 1000 - moves * 17 - secs * 3) + Math.max(0, 60 - secs) * 11;
+  saveToLeaderboard('memory', memScore);
   document.getElementById('win-sub').textContent = `${moves} moves · ${fmt(secs)}`;
+  document.getElementById('win-score').textContent = `Score: ${memScore}`;
   setTimeout(() => playWinSound(), 350);
   setTimeout(() => document.getElementById('win-overlay').classList.add('show'), 400);
 }

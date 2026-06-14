@@ -714,7 +714,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     </div>
     <div class="card-body">
       <div class="card-title">🅾️ Tic-Tac-Toe</div>
-      <div class="card-desc">Classic 4x4 X and O battle. Play a friend or take on the unbeatable CPU!</div>
+      <div class="card-desc">Classic 4x4 X and O battle. Can you beat the unbeatable CPU?</div>
       <div class="card-footer">
         <span class="play-btn">
           <svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4V1z"/></svg>
@@ -841,7 +841,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#e060b8,#a888e0,#e060b8,transparent);"></div>
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:2px solid #5a2855;flex-shrink:0;">
-      <div style="font-family:var(--font-pixel);font-size:0.62rem;letter-spacing:2px;background:linear-gradient(135deg,#f880cc,#c8a0f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">🏆 LEADERBOARD</div>
+      <div style="font-family:var(--font-pixel);font-size:0.78rem;letter-spacing:2px;background:linear-gradient(135deg,#f880cc,#c8a0f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">🏆 LEADERBOARD</div>
       <button onclick="closeLB()" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;transition:color 0.2s;" onmouseover="this.style.color='#f0c0d8'" onmouseout="this.style.color='#9878b8'">✕</button>
     </div>
     <!-- Game filter tabs -->
@@ -1026,7 +1026,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
 
   /* Score a "great" player would realistically achieve — maps to 1000 in ALL tab */
   const SCORE_CAPS = {
-    hangman: 2000, memory: 2500, worm: 400, tetris: 12000,
+    hangman: 2000, memory: 2500, worm: 100, tetris: 12000,
     plinko: 20000, '2048': 50000, runner: 5000, countdown: 2500, tictactoe: 400
   };
 
@@ -1041,7 +1041,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     document.getElementById('user-dropdown').style.display = 'none';
     document.getElementById('lb-modal').style.display = 'flex';
     document.getElementById('lb-game-tabs').innerHTML = '';
-    document.getElementById('lb-entries').innerHTML = '<div style="text-align:center;padding:40px;font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;letter-spacing:2px;">LOADING...</div>';
+    document.getElementById('lb-entries').innerHTML = '<div style="text-align:center;padding:40px;font-family:var(--font-pixel);font-size:0.48rem;color:#9878b8;letter-spacing:2px;">LOADING...</div>';
     await renderLB();
   }
 
@@ -1055,7 +1055,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     tabsEl.innerHTML = games.map(g => {
       const label = g === 'all' ? '⭐ ALL' : (GAME_LABELS[g] || g);
       const active = g === lbActiveGame;
-      return `<button onclick="setLBGame('${g}')" style="flex-shrink:0;background:none;border:none;border-bottom:2px solid ${active ? '#e070a8' : 'transparent'};margin-bottom:-2px;padding:10px 16px;font-family:var(--font-pixel);font-size:0.3rem;letter-spacing:1px;color:${active ? '#f0c0d8' : '#9878b8'};cursor:pointer;white-space:nowrap;transition:all 0.2s;">${label}</button>`;
+      return `<button onclick="setLBGame('${g}')" style="flex-shrink:0;background:none;border:none;border-bottom:2px solid ${active ? '#e070a8' : 'transparent'};margin-bottom:-2px;padding:10px 16px;font-family:var(--font-pixel);font-size:0.38rem;letter-spacing:1px;color:${active ? '#f0c0d8' : '#9878b8'};cursor:pointer;white-space:nowrap;transition:all 0.2s;">${label}</button>`;
     }).join('');
 
     const isAll = lbActiveGame === 'all';
@@ -1080,30 +1080,30 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
 
     const entriesEl = document.getElementById('lb-entries');
     if (!sorted.length) {
-      entriesEl.innerHTML = `<div style="text-align:center;padding:40px 20px;font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;letter-spacing:2px;line-height:2;">NO SCORES YET<br><span style="font-size:0.3rem;color:#5a2855;">play a game to get on the board!</span></div>`;
+      entriesEl.innerHTML = `<div style="text-align:center;padding:40px 20px;font-family:var(--font-pixel);font-size:0.48rem;color:#9878b8;letter-spacing:2px;line-height:2;">NO SCORES YET<br><span style="font-size:0.38rem;color:#5a2855;">play a game to get on the board!</span></div>`;
       return;
     }
 
-    const fairNote = isAll ? `<div style="padding:8px 22px 6px;font-family:var(--font-pixel);font-size:0.24rem;color:#5a2855;letter-spacing:1px;">★ scores normalized 0–1000 for cross-game fairness · open a game tab for raw scores</div>` : '';
+    const fairNote = isAll ? `<div style="padding:8px 22px 6px;font-family:var(--font-pixel);font-size:0.3rem;color:#5a2855;letter-spacing:1px;">★ scores normalized 0–1000 for cross-game fairness · open a game tab for raw scores</div>` : '';
 
     entriesEl.innerHTML = fairNote + sorted.map((e, i) => {
-      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span style="font-family:var(--font-pixel);font-size:0.32rem;color:#9878b8;min-width:22px;display:inline-block;text-align:center;">${i+1}</span>`;
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span style="font-family:var(--font-pixel);font-size:0.4rem;color:#9878b8;min-width:22px;display:inline-block;text-align:center;">${i+1}</span>`;
       const date = e.date ? new Date(e.date).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '';
-      const gameLbl = isAll ? `<span style="font-size:0.28rem;color:#c090b0;margin-left:6px;">${GAME_LABELS[e.game] || e.game}</span>` : '';
-      const scoreDisplay = isAll ? `${e._norm}<span style="font-size:0.28rem;color:#9878b8;">★</span>` : e.score.toLocaleString();
+      const gameLbl = isAll ? `<span style="font-size:0.35rem;color:#c090b0;margin-left:6px;">${GAME_LABELS[e.game] || e.game}</span>` : '';
+      const scoreDisplay = isAll ? `${e._norm}<span style="font-size:0.35rem;color:#9878b8;">★</span>` : e.score.toLocaleString();
       const isTop = i < 3;
       return `<div style="display:flex;align-items:center;gap:14px;padding:12px 22px;border-bottom:1px solid #2a1840;background:${isTop ? 'rgba(224,112,168,0.06)' : 'none'};transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.09)'" onmouseout="this.style.background='${isTop ? 'rgba(224,112,168,0.06)' : 'none'}'">
-        <span style="min-width:28px;text-align:center;font-size:${i<3?'1.1':'0.9'}rem;">${medal}</span>
-        <span style="flex:1;font-family:var(--font-pixel);font-size:0.36rem;color:#f0c0d8;letter-spacing:1px;">${escHtml(e.name)}${gameLbl}</span>
-        <span style="font-family:var(--font-pixel);font-size:0.4rem;color:#d8c070;letter-spacing:1px;">${scoreDisplay}</span>
-        <span style="font-family:var(--font-pixel);font-size:0.27rem;color:#9878b8;min-width:48px;text-align:right;">${date}</span>
+        <span style="min-width:28px;text-align:center;font-size:${i<3?'1.35':'1.1'}rem;">${medal}</span>
+        <span style="flex:1;font-family:var(--font-pixel);font-size:0.45rem;color:#f0c0d8;letter-spacing:1px;">${escHtml(e.name)}${gameLbl}</span>
+        <span style="font-family:var(--font-pixel);font-size:0.5rem;color:#d8c070;letter-spacing:1px;">${scoreDisplay}</span>
+        <span style="font-family:var(--font-pixel);font-size:0.34rem;color:#9878b8;min-width:48px;text-align:right;">${date}</span>
       </div>`;
     }).join('');
   }
 
   async function setLBGame(g) {
     lbActiveGame = g;
-    document.getElementById('lb-entries').innerHTML = '<div style="text-align:center;padding:40px;font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;letter-spacing:2px;">LOADING...</div>';
+    document.getElementById('lb-entries').innerHTML = '<div style="text-align:center;padding:40px;font-family:var(--font-pixel);font-size:0.48rem;color:#9878b8;letter-spacing:2px;">LOADING...</div>';
     await renderLB();
   }
 

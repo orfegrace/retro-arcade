@@ -489,6 +489,7 @@ const db=firebase.firestore();
     <div class="message-emoji" id="msg-emoji">🎉</div>
     <div class="message-title" id="msg-title">You Win!</div>
     <div class="message-word" id="msg-word"></div>
+    <div id="msg-score" style="font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;letter-spacing:1px;margin-bottom:4px;"></div>
     <div style="display:flex;gap:10px;">
       <button class="play-again-btn" onclick="playAgainSound();newGame()">Play Again</button>
       <a href="index.html?from=game" class="play-again-btn" onclick="event.preventDefault();playExitSound();setTimeout(()=>location.href='index.html?from=game',350);" style="background:rgba(192,160,224,0.08);color:#f0c0d8;box-shadow:none;border:2px solid var(--border-bright);text-decoration:none;">Exit</a>
@@ -826,7 +827,10 @@ function showFaceFeatures() {
 
 function endGame(won) {
   gameOver = true;
-  if (won) saveToLeaderboard('hangman', (MAX_WRONG - wrongCount) * 110 + currentWord.length * 23);
+  const correctPositions = [...currentWord].filter(ch => guessed.has(ch)).length;
+  const hangmanScore = won ? (MAX_WRONG - wrongCount) * 110 + currentWord.length * 23 : correctPositions * 17 + currentWord.length * 13;
+  saveToLeaderboard('hangman', hangmanScore);
+  document.getElementById('msg-score').textContent = `Score: ${hangmanScore}`;
   const overlay = document.getElementById('msg-overlay');
   const emoji = document.getElementById('msg-emoji');
   const title = document.getElementById('msg-title');

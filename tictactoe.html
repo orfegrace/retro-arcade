@@ -340,10 +340,6 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
 
 <h1>🅾️ Tic-Tac-Toe</h1>
 
-<div class="mode-row">
-  <button class="mode-btn" id="btn-2p" onclick="setMode('2p')">2 Players</button>
-  <button class="mode-btn active" id="btn-ai" onclick="setMode('ai')">vs CPU</button>
-</div>
 
 <div class="scoreboard">
   <div class="score-item">
@@ -398,6 +394,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
 <div id="result-overlay" style="display:none;position:fixed;inset:0;background:rgba(14,9,18,0.92);flex-direction:column;align-items:center;justify-content:center;gap:14px;backdrop-filter:blur(10px);z-index:10;">
   <div id="ov-emoji" style="font-size:3rem;animation:wobble 1.2s ease-in-out infinite alternate;"></div>
   <div id="ov-title" style="font-family:var(--font-pixel);font-size:1rem;background:linear-gradient(135deg,var(--pink-light),var(--lavender));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;"></div>
+  <div id="ov-score" style="font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;letter-spacing:1px;"></div>
   <div style="display:flex;gap:10px;margin-top:6px;">
     <button class="shimmer-btn" onclick="playAgainSound();closeOverlay()" style="background:linear-gradient(135deg,var(--pink),var(--lavender));color:var(--bg);font-family:var(--font-pixel);font-size:0.48rem;border:2px solid var(--pink-light);border-radius:2px;padding:10px 20px;cursor:pointer;box-shadow:var(--glow-pink);letter-spacing:1px;text-transform:uppercase;transition:transform 0.15s;">Play Again</button>
     <a class="shimmer-btn" href="index.html?from=game" onclick="event.preventDefault();playExitSound();setTimeout(()=>location.href='index.html?from=game',350);" style="background:rgba(192,160,224,0.08);color:var(--pink-light);font-family:var(--font-pixel);font-size:0.48rem;border:2px solid var(--border-bright);border-radius:2px;padding:10px 20px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;text-decoration:none;display:inline-flex;align-items:center;transition:transform 0.15s;">Exit</a>
@@ -424,17 +421,9 @@ const WINS = [
 let board = Array(N * N).fill(null);
 let current = 'X';
 let gameOver = false;
-let mode = 'ai';
 let playerSide = 'X';
 let scores = { X: 0, O: 0, draw: 0 };
 let cpuThinking = false;
-
-function setMode(m) {
-  mode = m;
-  document.getElementById('btn-2p').classList.toggle('active', m === '2p');
-  document.getElementById('btn-ai').classList.toggle('active', m === 'ai');
-  resetGame();
-}
 
 function resetGame() {
   board = Array(N * N).fill(null);
@@ -449,27 +438,21 @@ function resetGame() {
     c.className = 'cell';
   });
 
-  if (mode === 'ai') {
-    playerSide = Math.random() < 0.5 ? 'X' : 'O';
-    const symbol = playerSide === 'X' ? '✕' : '○';
-    setStatus(`🪙 You are ${symbol}!`);
-    updateTurnIndicator();
-    if (playerSide === 'O') {
-      cpuThinking = true;
-      setThinking(true);
-      setTimeout(() => {
-        setStatus('');
-        cpuThinking = false;
-        setThinking(false);
-        placeMove(getBestMove(board), 'X');
-      }, 1200);
-    } else {
-      setTimeout(() => setStatus(''), 1600);
-    }
+  playerSide = Math.random() < 0.5 ? 'X' : 'O';
+  const symbol = playerSide === 'X' ? '✕' : '○';
+  setStatus(`🪙 You are ${symbol}!`);
+  updateTurnIndicator();
+  if (playerSide === 'O') {
+    cpuThinking = true;
+    setThinking(true);
+    setTimeout(() => {
+      setStatus('');
+      cpuThinking = false;
+      setThinking(false);
+      placeMove(getBestMove(board), 'X');
+    }, 1200);
   } else {
-    playerSide = 'X';
-    setStatus('');
-    updateTurnIndicator();
+    setTimeout(() => setStatus(''), 1600);
   }
 }
 
@@ -502,11 +485,7 @@ function updateTurnIndicator() {
   dotO.className = 'turn-dot' + (current === 'O' && !gameOver ? ' o-dot' : '');
 
   if (!gameOver) {
-    if (mode === 'ai') {
-      label.textContent = current === playerSide ? 'Your turn' : "CPU's turn";
-    } else {
-      label.textContent = `${current}'s turn`;
-    }
+    label.textContent = current === playerSide ? 'Your turn' : "CPU's turn";
   } else {
     label.textContent = '';
   }
@@ -514,7 +493,7 @@ function updateTurnIndicator() {
 
 function handleClick(i) {
   if (gameOver || board[i] || cpuThinking) return;
-  if (mode === 'ai' && current !== playerSide) return;
+  if (current !== playerSide) return;
   placeMove(i, current);
 }
 
@@ -535,14 +514,15 @@ function placeMove(i, player) {
     gameOver = true;
     setThinking(false);
 
-    const isCpu = mode === 'ai' && player !== playerSide;
-    const isYou = mode === 'ai' && player === playerSide;
+    const isCpu = player !== playerSide;
+    const isYou = player === playerSide;
     const winLabel = isCpu ? 'CPU' : (isYou ? 'You' : player);
     setStatus(isYou ? 'You win! 🎉' : `${winLabel} wins!`);
     updateTurnIndicator();
     playWinSound();
-    if (isYou) saveToLeaderboard('tictactoe', 290 - board.filter(v => v !== null).length * 23);
-    setTimeout(() => showOverlay(isCpu ? '🤖' : '🎉', isCpu ? 'CPU wins!' : (isYou ? 'You win!' : `${winLabel} wins!`)), 700);
+    const tttScore = isYou ? 290 - board.filter(v => v !== null).length * 23 : null;
+    if (isYou) saveToLeaderboard('tictactoe', tttScore);
+    setTimeout(() => showOverlay(isCpu ? '🤖' : '🎉', isCpu ? 'CPU wins!' : (isYou ? 'You win!' : `${winLabel} wins!`), isYou ? `Score: ${tttScore}` : ''), 700);
     return;
   }
 
@@ -553,14 +533,14 @@ function placeMove(i, player) {
     setThinking(false);
     setStatus("It's a draw!");
     updateTurnIndicator();
-    setTimeout(() => { playDrawSound(); showOverlay('🤝', "It's a draw!"); }, 700);
+    setTimeout(() => { playDrawSound(); showOverlay('🤝', "It's a draw!", ''); }, 700);
     return;
   }
 
   current = current === 'X' ? 'O' : 'X';
   updateTurnIndicator();
 
-  if (mode === 'ai' && current !== playerSide && !gameOver) {
+  if (current !== playerSide && !gameOver) {
     cpuThinking = true;
     setThinking(true);
     setTimeout(() => {
@@ -720,9 +700,10 @@ function playExitSound() {
   } catch(e) {}
 }
 
-function showOverlay(emoji, title) {
+function showOverlay(emoji, title, score = '') {
   document.getElementById('ov-emoji').textContent = emoji;
   document.getElementById('ov-title').textContent = title;
+  document.getElementById('ov-score').textContent = score;
   document.getElementById('result-overlay').style.display = 'flex';
 }
 

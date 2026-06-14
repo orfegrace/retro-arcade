@@ -179,7 +179,7 @@ const db=firebase.firestore();
   </div>
 </div>
 
-<h1>🔨 WHACK-A-MOLE</h1>
+<h1>🕳️ WHACK-A-MOLE</h1>
 
 <div class="hud">
   <div class="hud-item">
@@ -348,6 +348,7 @@ function whack(idx) {
 }
 
 function startGame() {
+  playStartSound();
   score = 0; timeLeft = GAME_SECS; streak = 0; hits = 0;
   gameActive = true;
   clearTimeout(spawnTimer); clearInterval(tickTimer);
@@ -395,6 +396,22 @@ function ensureAudio() {
   if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
   if (ctx.state === 'suspended') ctx.resume();
 }
+function playStartSound() {
+  try {
+    const ctx2 = new (window.AudioContext || window.webkitAudioContext)();
+    const t = ctx2.currentTime;
+    [392, 523, 659, 784].forEach((freq, i) => {
+      const osc = ctx2.createOscillator(), g = ctx2.createGain();
+      osc.connect(g); g.connect(ctx2.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, t + i * 0.06);
+      g.gain.setValueAtTime(0.14, t + i * 0.06);
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.11);
+      osc.start(t + i * 0.06); osc.stop(t + i * 0.06 + 0.13);
+    });
+  } catch(e) {}
+}
+
 function playWhack(golden) {
   ensureAudio();
   const o = ctx.createOscillator(), g = ctx.createGain();

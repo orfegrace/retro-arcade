@@ -51,6 +51,27 @@ canvas {
   letter-spacing: 1px;
   text-transform: uppercase;
 }
+#char-select {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+}
+.char-btn {
+  width: 28px; height: 28px;
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 3px;
+  cursor: pointer;
+  background: rgba(0,0,0,0.35);
+  image-rendering: pixelated;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.char-btn:hover { border-color: rgba(255,255,255,0.35); transform: translateY(-2px); }
+.char-btn.selected { border-color: #f472b6; box-shadow: 0 0 10px rgba(244,114,182,0.55); }
+body.light-mode .char-btn { border-color: rgba(0,0,0,0.12); background: rgba(255,255,255,0.4); }
+body.light-mode .char-btn.selected { border-color: #c840a0; box-shadow: 0 0 10px rgba(200,64,160,0.4); }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -63,7 +84,15 @@ const db=firebase.firestore();
 <body>
 
 <h1>🦕 RUNNER</h1>
-<canvas id="c" width="700" height="220"></canvas>
+<div style="position:relative;">
+  <div id="char-select">
+    <canvas class="char-btn selected" id="char-0" width="56" height="56" onclick="selectChar(0)"></canvas>
+    <canvas class="char-btn" id="char-1" width="56" height="56" onclick="selectChar(1)"></canvas>
+    <canvas class="char-btn" id="char-2" width="56" height="56" onclick="selectChar(2)"></canvas>
+    <canvas class="char-btn" id="char-3" width="56" height="56" onclick="selectChar(3)"></canvas>
+  </div>
+  <canvas id="c" width="900" height="280"></canvas>
+</div>
 <p class="hint">SPACE / TAP TO JUMP &nbsp;·&nbsp; ↓ TO DUCK</p>
 
 <div id="game-over-overlay" style="display:none;position:fixed;inset:0;background:rgba(14,9,18,0.92);flex-direction:column;align-items:center;justify-content:center;gap:14px;backdrop-filter:blur(10px);z-index:10;">
@@ -81,8 +110,46 @@ const db=firebase.firestore();
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 
-const GH = 175;
+const GH = 224;
 const PINK = '#f472b6', LAVEN = '#c4b5fd', MINT = '#88c0b0', DIM = '#4a2060', MUTED = '#7a5888';
+
+const CHARS = [
+  { body: '#f472b6', dark: '#d050a0', tail: '#b04090', eye: '#0e0912' },
+  { body: '#4ade80', dark: '#22c55e', tail: '#16a34a', eye: '#0e0912' },
+  { body: '#60a8f8', dark: '#3b82f6', tail: '#1d4ed8', eye: '#0e0912' },
+  { body: '#fcd34d', dark: '#f59e0b', tail: '#d97706', eye: '#0e0912' },
+];
+let selectedChar = 0;
+
+function drawMiniChar(mc, ci) {
+  const c = CHARS[ci];
+  mc.clearRect(0, 0, 56, 56);
+  // Use exact same coords as drawDino (dx=72, dy=196, ground=224)
+  // Bounding box: x 65–98 (w=33), y 185–232 (h=47)
+  // Translate so bbox top-left lands at (12, 5) inside the 56×56 canvas
+  mc.save();
+  mc.translate(12 - 65, 5 - 185);
+  mc.fillStyle = c.body;
+  mc.fillRect(72, 196, 26, 28);       // body
+  mc.fillRect(72+8, 196-11, 18, 13);  // head
+  mc.fillStyle = c.eye;
+  mc.fillRect(72+20, 196-9, 3, 3);    // eye
+  mc.fillStyle = c.tail;
+  mc.fillRect(72-7, 196+5, 8, 7);     // tail
+  mc.fillStyle = c.dark;
+  mc.fillRect(72+4, 224, 6, 8);       // right leg
+  mc.fillRect(72+14, 224, 6, 5);      // left leg
+  mc.restore();
+}
+
+function selectChar(i) {
+  selectedChar = i;
+  document.querySelectorAll('.char-btn').forEach((el, j) => el.classList.toggle('selected', j === i));
+}
+
+for (let i = 0; i < 4; i++) {
+  drawMiniChar(document.getElementById('char-' + i).getContext('2d'), i);
+}
 
 const dino = { x: 72, y: GH, w: 26, h: 28, vy: 0, ducking: false, onGround: true };
 let obstacles = [], score = 0, best = +localStorage.getItem('rn_best') || 0;
@@ -176,18 +243,19 @@ function hits(o) {
 }
 
 function drawDino() {
+  const c = CHARS[selectedChar];
   const dh = dino.ducking ? 14 : dino.h;
   const dy = dino.y - dh;
-  ctx.fillStyle = PINK;
+  ctx.fillStyle = c.body;
   ctx.fillRect(dino.x, dy, dino.w, dh);
   if (!dino.ducking) {
     ctx.fillRect(dino.x + 8, dy - 11, 18, 13);
-    ctx.fillStyle = '#0e0912';
+    ctx.fillStyle = c.eye;
     ctx.fillRect(dino.x + 20, dy - 9, 3, 3);
-    ctx.fillStyle = PINK;
+    ctx.fillStyle = c.body;
   }
   const l = Math.floor(frame / 7) % 2;
-  ctx.fillStyle = '#d050a0';
+  ctx.fillStyle = c.dark;
   if (dino.onGround || dino.ducking) {
     ctx.fillRect(dino.x + 4, dino.y, 6, l ? 8 : 5);
     ctx.fillRect(dino.x + 14, dino.y, 6, l ? 5 : 8);
@@ -195,7 +263,7 @@ function drawDino() {
     ctx.fillRect(dino.x + 4, dino.y - 4, 6, 7);
     ctx.fillRect(dino.x + 14, dino.y - 4, 6, 7);
   }
-  ctx.fillStyle = '#b04090';
+  ctx.fillStyle = c.tail;
   ctx.fillRect(dino.x - 7, dy + 5, 8, 7);
 }
 
@@ -256,14 +324,21 @@ function drawNightBg() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   // moon
   ctx.fillStyle = '#fdecd0';
-  ctx.fillRect(558, 18, 22, 22);
+  ctx.fillRect(775, 34, 22, 22);
   ctx.fillStyle = 'rgba(0,0,0,0.18)';
-  ctx.fillRect(562, 22, 4, 4);
-  ctx.fillRect(568, 28, 3, 3);
-  // stars
-  ctx.fillStyle = 'rgba(255,200,230,0.55)';
-  [[80,30],[200,52],[350,18],[490,42],[610,28],[150,65],[430,60]].forEach(([x,y]) => {
-    if (Math.sin(frame * 0.05 + x) > 0.5) ctx.fillRect(x, y, 2, 2);
+  ctx.fillRect(779, 38, 4, 4);
+  ctx.fillRect(785, 44, 3, 3);
+  // stars — more spread out, varied sizes, slow independent twinkle
+  const STARS = [
+    [55,22,2],[120,50,1],[185,26,2],[255,60,1],[325,16,2],[395,46,1],
+    [460,34,2],[528,54,1],[592,20,2],[655,48,1],[718,16,2],[775,52,1],
+    [148,70,1],[285,74,2],[435,66,1],[582,72,2],[730,64,1],[858,32,2],
+  ];
+  STARS.forEach(([x, y, s]) => {
+    if (Math.sin(frame * 0.04 + x * 0.73) > 0.42) {
+      ctx.fillStyle = s === 2 ? 'rgba(255,200,230,0.7)' : 'rgba(255,200,230,0.42)';
+      ctx.fillRect(x, y, s, s);
+    }
   });
 }
 
@@ -347,8 +422,8 @@ function loop() {
   const hudMute = dayness < 0.5 ? MUTED : '#7a4458';
   const msgCol  = dayness < 0.5 ? '#c0a0d0' : '#4a1850';
   ctx.textAlign = 'right';
-  px(`${score}`, canvas.width - 10, 22, 9, hudPink);
-  px(`HI ${best}`, canvas.width - 10, 38, 7, hudMute);
+  px(`${score}`, canvas.width - 10, 24, 11, hudPink);
+  px(`HI ${best}`, canvas.width - 10, 42, 9, hudMute);
   ctx.textAlign = 'left';
 
   if (state === 'idle') {

@@ -405,6 +405,14 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
 </div>
 <style>@keyframes wobble { from{transform:rotate(-8deg)scale(1)} to{transform:rotate(8deg)scale(1.1)} }</style>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+const _fbCfg={apiKey:"AIzaSyAs4pZ-k8IPAAtk3dLM7Gy-oL4nLmOPN4g",authDomain:"retro-arcade-f61e1.firebaseapp.com",projectId:"retro-arcade-f61e1",storageBucket:"retro-arcade-f61e1.firebasestorage.app",messagingSenderId:"750905179148",appId:"1:750905179148:web:e27684e54bfd8e02680229"};
+if(!firebase.apps.length)firebase.initializeApp(_fbCfg);
+const db=firebase.firestore();
+</script>
+
 <script>
 const N = 4;
 const WINS = [
@@ -533,6 +541,7 @@ function placeMove(i, player) {
     setStatus(isYou ? 'You win! 🎉' : `${winLabel} wins!`);
     updateTurnIndicator();
     playWinSound();
+    if (isYou) saveToLeaderboard('tictactoe', 290 - board.filter(v => v !== null).length * 23);
     setTimeout(() => showOverlay(isCpu ? '🤖' : '🎉', isCpu ? 'CPU wins!' : (isYou ? 'You win!' : `${winLabel} wins!`)), 700);
     return;
   }
@@ -723,6 +732,15 @@ function closeOverlay() {
 }
 
 updateTurnIndicator();
+
+function saveToLeaderboard(game, score) {
+  try {
+    const user = JSON.parse(localStorage.getItem('arcadeSession') || 'null');
+    if (!user) return;
+    db.collection('leaderboard').add({ name: user.name, game, score, date: new Date().toISOString() })
+      .catch(e => console.error('[Leaderboard] write failed:', e));
+  } catch(e) {}
+}
 
 const MOON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 function toggleTheme() {

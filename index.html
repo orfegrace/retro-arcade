@@ -905,40 +905,47 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     el.style.display = 'block';
   }
 
-  /* ── localStorage auth store ── */
-  function getUsers() { try { return JSON.parse(localStorage.getItem('arcadeUsers') || '[]'); } catch { return []; } }
-  function saveUsers(u) { localStorage.setItem('arcadeUsers', JSON.stringify(u)); }
+  /* ── Session (device-local) ── */
   function getSession() { try { return JSON.parse(localStorage.getItem('arcadeSession') || 'null'); } catch { return null; } }
   function saveSession(u) { localStorage.setItem('arcadeSession', JSON.stringify(u)); }
 
-  /* ── Auth actions ── */
-  function doSignIn() {
+  /* ── Auth actions (accounts stored in Firestore) ── */
+  async function doSignIn() {
     const name = document.getElementById('si-name').value.trim();
     const pass = document.getElementById('si-pass').value;
     if (!name || !pass) { showError('si-error', 'fill in all fields'); return; }
-    const users = getUsers();
-    const user  = users.find(u => u.name.toLowerCase() === name.toLowerCase() && u.password === pass);
-    if (!user) { showError('si-error', 'wrong name or password'); return; }
-    saveSession(user);
-    playLetsPlaySound();
-    onLogin(user);
+    try {
+      const snap = await db.collection('users').where('name_lower', '==', name.toLowerCase()).limit(1).get();
+      if (snap.empty || snap.docs[0].data().password !== pass) {
+        showError('si-error', 'wrong name or password'); return;
+      }
+      const user = { name: snap.docs[0].data().name, password: pass };
+      saveSession(user);
+      playLetsPlaySound();
+      onLogin(user);
+    } catch(e) {
+      showError('si-error', 'connection error — try again');
+    }
   }
 
-  function doCreateAccount() {
+  async function doCreateAccount() {
     const name  = document.getElementById('ca-name').value.trim();
     const pass  = document.getElementById('ca-pass').value;
     const pass2 = document.getElementById('ca-pass2').value;
     if (!name || !pass || !pass2) { showError('ca-error', 'fill in all fields'); return; }
     if (pass !== pass2) { showError('ca-error', 'passwords do not match'); return; }
     if (pass.length < 6) { showError('ca-error', 'password too short (6+ chars)'); return; }
-    const users = getUsers();
-    if (users.find(u => u.name.toLowerCase() === name.toLowerCase())) { showError('ca-error', 'name already taken'); return; }
-    const user = { name, password: pass };
-    users.push(user);
-    saveUsers(users);
-    saveSession(user);
-    playLetsPlaySound();
-    onLogin(user);
+    try {
+      const snap = await db.collection('users').where('name_lower', '==', name.toLowerCase()).limit(1).get();
+      if (!snap.empty) { showError('ca-error', 'name already taken'); return; }
+      await db.collection('users').add({ name, name_lower: name.toLowerCase(), password: pass });
+      const user = { name, password: pass };
+      saveSession(user);
+      playLetsPlaySound();
+      onLogin(user);
+    } catch(e) {
+      showError('ca-error', 'connection error — try again');
+    }
   }
 
   function doSignOut() {

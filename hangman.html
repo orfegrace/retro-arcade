@@ -826,7 +826,7 @@ function showFaceFeatures() {
 
 function endGame(won) {
   gameOver = true;
-  if (won) saveToLeaderboard('hangman', (MAX_WRONG - wrongCount) * 10);
+  if (won) saveToLeaderboard('hangman', (MAX_WRONG - wrongCount) * 110 + currentWord.length * 23);
   const overlay = document.getElementById('msg-overlay');
   const emoji = document.getElementById('msg-emoji');
   const title = document.getElementById('msg-title');

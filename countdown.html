@@ -445,7 +445,7 @@ function timeUp() {
 
 function showResult(exact, val) {
   const diff = Math.abs(val - target);
-  saveToLeaderboard('countdown', exact ? 1000 : Math.max(0, 1000 - diff * 50));
+  saveToLeaderboard('countdown', exact ? 1000 + timerSecs * 11 : Math.max(0, 1000 - diff * 47));
   const ov = document.getElementById('result-overlay');
   document.getElementById('ov-emoji').textContent = exact ? '🎉' : diff <= 5 ? '🌸' : diff <= 10 ? '✨' : '😵';
   document.getElementById('ov-title').textContent = exact ? 'EXACT!' : diff <= 5 ? 'SO CLOSE!' : diff <= 10 ? 'NEARLY!' : 'TIME\'S UP!';

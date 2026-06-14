@@ -266,7 +266,7 @@ function startTimer() {
 
 function win() {
   clearInterval(timerInterval);
-  saveToLeaderboard('memory', Math.max(0, 1000 - moves * 20 - secs * 3));
+  saveToLeaderboard('memory', Math.max(0, 1000 - moves * 17 - secs * 3) + Math.max(0, 60 - secs) * 11);
   document.getElementById('win-sub').textContent = `${moves} moves · ${fmt(secs)}`;
   setTimeout(() => playWinSound(), 350);
   setTimeout(() => document.getElementById('win-overlay').classList.add('show'), 400);

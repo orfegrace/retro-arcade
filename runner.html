@@ -146,7 +146,7 @@ function showGameOver() {
 function tryJump() {
   if (state === 'dead') return;
   if (state === 'idle') { reset(); return; }
-  if (dino.onGround) { dino.vy = -13.5; dino.onGround = false; playJump(); }
+  if (dino.onGround) { dino.vy = -10.5; dino.onGround = false; playJump(); }
 }
 
 document.addEventListener('keydown', e => {
@@ -170,7 +170,7 @@ function hits(o) {
   const dh = dino.ducking ? 14 : dino.h;
   const dy = dino.y - dh;
   const oy = o.y - o.h;
-  const p = 5;
+  const p = o.type === 'bird' ? 0 : 5;
   return !(dino.x + dino.w - p < o.x + p || dino.x + p > o.x + o.w - p ||
            dy + dh - p < oy + p || dy + p > oy + o.h - p);
 }

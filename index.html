@@ -530,6 +530,8 @@ body.light-mode h1 {
   filter: drop-shadow(0 0 6px rgba(160,0,100,0.2));
 }
 body.light-mode #welcome-msg { color: #9a006a !important; filter: drop-shadow(0 0 4px rgba(160,0,100,0.2)) !important; }
+body.light-mode #user-menu-btn { background: rgba(255,255,255,0.35); border-color: rgba(200,100,160,0.2); color: #b0006a; }
+body.light-mode #user-dropdown { background: #f5eaff; border-color: #c090d8; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
 body.light-mode .card-title {
   background: linear-gradient(135deg, #b0006a, #7030b0);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
@@ -691,8 +693,8 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   </a>
 
   <!-- Runner game card -->
-  <a class="game-card" href="runner.html" style="border-color:#cc8800;">
-    <div class="card-preview" style="background:linear-gradient(135deg,#1a1200,#cc8800);">
+  <a class="game-card" href="runner.html" style="border-color:#f5a800;">
+    <div class="card-preview" style="background:linear-gradient(135deg,#2a1800,#f5a800,#ffe066);">
       <span class="preview-icon">🦕</span>
     </div>
     <div class="card-body">
@@ -707,14 +709,14 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     </div>
   </a>
 
-  <!-- Tic-Tac-Toe game card -->
-  <a class="game-card" href="tictactoe.html" style="border-color:#cc2020;">
-    <div class="card-preview" style="background:linear-gradient(135deg,#1a0000,#cc2020);">
-      <span class="preview-icon">🅾️</span>
+  <!-- Whack-a-Mole game card -->
+  <a class="game-card" href="mole.html" style="border-color:#aa6600;">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a0e00,#aa6600);">
+      <span class="preview-icon">🕳️</span>
     </div>
     <div class="card-body">
-      <div class="card-title">🅾️ Tic-Tac-Toe</div>
-      <div class="card-desc">Classic 4x4 X and O battle. Can you beat the unbeatable CPU?</div>
+      <div class="card-title">🕳️ Whack-a-Mole</div>
+      <div class="card-desc">Whack the moles before they hide! Golden moles are worth big points.</div>
       <div class="card-footer">
         <span class="play-btn">
           <svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4V1z"/></svg>
@@ -854,7 +856,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
 <!-- User menu (top-left, shown after login) -->
 <div id="user-menu-wrap" style="display:none;position:fixed;top:14px;left:14px;z-index:300;">
   <button id="user-menu-btn" onclick="toggleUserMenu()"
-    style="background:rgba(0,0,0,0.2);border:1.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 12px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:rgba(240,192,216,0.85);cursor:pointer;backdrop-filter:blur(8px);transition:all 0.2s;display:flex;align-items:center;gap:6px;"
+    style="background:rgba(0,0,0,0.15);border:1.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:calc(6px + 0.34rem) 12px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:rgba(255,255,255,0.65);cursor:pointer;backdrop-filter:blur(8px);transition:background 0.2s,border-color 0.2s,color 0.2s,opacity 0.2s;display:flex;align-items:center;gap:6px;opacity:0.75;line-height:1;"
     onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.75'">
     <span id="user-menu-label">👤 </span>▾
   </button>
@@ -1020,14 +1022,14 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   /* ── Leaderboard ── */
   const GAME_LABELS = {
     hangman: '😵 Hangman', memory: '🃏 Memory', worm: '🪱 Worm', tetris: '🧱 Tetris',
-    plinko: '🎯 Plinko', '2048': '🔢 2048', runner: '🦕 Runner', tictactoe: '🅾️ Tic-Tac-Toe',
+    plinko: '🎯 Plinko', '2048': '🔢 2048', runner: '🦕 Runner', mole: '🕳️ Whack-a-Mole',
     countdown: '🧮 Countdown'
   };
 
   /* Score a "great" player would realistically achieve — maps to 1000 in ALL tab */
   const SCORE_CAPS = {
     hangman: 2000, memory: 2500, worm: 100, tetris: 12000,
-    plinko: 20000, '2048': 50000, runner: 5000, countdown: 2500, tictactoe: 400
+    plinko: 20000, '2048': 50000, runner: 5000, countdown: 2500, mole: 500
   };
 
   function normalizeScore(game, raw) {

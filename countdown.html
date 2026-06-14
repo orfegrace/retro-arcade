@@ -264,7 +264,7 @@ const db=firebase.firestore();
     <div class="intro-rule"><span class="intro-dot">▸</span><span>Results become new numbers — <b>keep combining</b></span></div>
     <div class="intro-rule"><span class="intro-dot">▸</span><span>Division must be <b>exact</b> · all results must be <b>&gt; 0</b></span></div>
   </div>
-  <button class="btn" onclick="startGame()">&#9654; &nbsp;START</button>
+  <button class="btn" onclick="startGame()" style="padding:7px 18px;font-size:0.38rem;text-align:center;">START</button>
 </div>
 
 <div id="result-overlay">
@@ -452,9 +452,9 @@ function showResult(exact, val) {
   const ov = document.getElementById('result-overlay');
   document.getElementById('ov-emoji').textContent = exact ? '🎉' : diff <= 5 ? '🌸' : diff <= 10 ? '✨' : '😵';
   document.getElementById('ov-title').textContent = exact ? 'EXACT!' : diff <= 5 ? 'SO CLOSE!' : diff <= 10 ? 'NEARLY!' : 'TIME\'S UP!';
-  document.getElementById('ov-sub').textContent = exact
-    ? `Target ${target} reached!\n${history.map(h=>h.step).join('\n')}`
-    : `Target: ${target}\nBest: ${val} (off by ${diff})`;
+  document.getElementById('ov-sub').innerHTML = exact
+    ? `Target ${target} reached!<br>${history.map(h=>h.step).join('<br>')}`
+    : `Target: ${target}<br>Best: ${val} (off by ${diff})`;
   ov.classList.add('show');
   if (exact) playWinSound(); else playLoseSound();
 }

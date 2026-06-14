@@ -52,6 +52,10 @@ The site is designed as a personal arcade hub where users can sign in, select a 
 
 <img width="1440" height="754" alt="Screenshot 2026-06-14 at 10 16 35 AM" src="https://github.com/user-attachments/assets/533cbe40-600e-433f-ad38-c6792bbfae9f" />
 
+### Memory Match 
+<img width="1440" height="711" alt="Screenshot 2026-06-14 at 12 38 57 PM" src="https://github.com/user-attachments/assets/3a65b6df-fbdc-4e69-afff-7c7e028ea1ce" />
+
+
 ### 2048
 
 <img width="1440" height="749" alt="Screenshot 2026-06-14 at 10 15 39 AM" src="https://github.com/user-attachments/assets/a4787cd4-09d8-4a47-9ff6-ab5e53d68485" />

@@ -565,6 +565,8 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
 
 .dm-btn { transition: color 0.2s; }
 .dm-btn:hover { color: #f0c0d8 !important; }
+.modal-close-btn { transition: color 0.2s; }
+.modal-close-btn:hover { color: #f0c0d8 !important; }
 /* DM modal light mode */
 body.light-mode #dm-modal { background: rgba(220,180,210,0.55) !important; }
 body.light-mode #dm-inner { background: linear-gradient(160deg,#fff5fb,#fce8f4) !important; border-color: #e090c8 !important; box-shadow: 0 0 40px rgba(200,80,160,0.15), 0 20px 40px rgba(0,0,0,0.1) !important; }
@@ -581,6 +583,39 @@ body.light-mode #dm-send-btn { background: rgba(220,80,160,0.15) !important; bor
 body.light-mode .dm-bubble-me { background: rgba(220,100,170,0.18) !important; border-color: #e080c0 !important; }
 body.light-mode .dm-bubble-them { background: rgba(200,150,220,0.12) !important; border-color: #d0a0d8 !important; }
 body.light-mode .dm-bubble-text { color: #6a1050 !important; }
+
+/* Leaderboard light mode */
+body.light-mode #lb-modal { background: rgba(220,180,210,0.55) !important; }
+body.light-mode #lb-inner { background: linear-gradient(160deg,#fff5fb,#fce8f4) !important; border-color: #e090c8 !important; box-shadow: 0 0 40px rgba(200,80,160,0.15), 0 20px 40px rgba(0,0,0,0.1) !important; }
+body.light-mode #lb-header { border-bottom-color: #f0c8e0 !important; }
+body.light-mode #lb-game-tabs { border-bottom-color: #f0c8e0 !important; }
+body.light-mode #lb-entries { background: transparent; }
+body.light-mode #lb-entries > div { border-bottom-color: #f0d8ea !important; }
+body.light-mode .modal-close-btn { color: #c080b0 !important; }
+body.light-mode .modal-close-btn:hover { color: #a02070 !important; }
+body.light-mode .modal-topbar { background: linear-gradient(90deg,transparent,#f080c8,#c8a0e8,#f080c8,transparent) !important; }
+
+/* Players light mode */
+body.light-mode #players-modal { background: rgba(220,180,210,0.55) !important; }
+body.light-mode #players-inner { background: linear-gradient(160deg,#fff5fb,#fce8f4) !important; border-color: #e090c8 !important; box-shadow: 0 0 40px rgba(200,80,160,0.15), 0 20px 40px rgba(0,0,0,0.1) !important; }
+body.light-mode #players-header { border-bottom-color: #f0c8e0 !important; }
+body.light-mode #players-list > div { border-bottom-color: #f0d8ea !important; }
+body.light-mode #players-list input { background: rgba(255,255,255,0.85) !important; border-color: #e0a0c8 !important; color: #802060 !important; }
+body.light-mode #players-list button { border-color: #e0a0c8 !important; color: #a02070 !important; }
+body.light-mode .player-bio { color: #7a3060 !important; }
+
+/* Unified name color in light mode across all screens */
+body.light-mode .player-name,
+body.light-mode .lb-name,
+body.light-mode .dm-sender-name { color: #8a2060 !important; }
+
+/* Leaderboard text darker in light mode */
+body.light-mode .lb-entry { border-bottom-color: #f0d8ea !important; }
+body.light-mode .lb-score { color: #7a5800 !important; }
+body.light-mode .lb-date { color: #7a3060 !important; }
+
+/* DM text darker in light mode */
+body.light-mode .dm-bubble-text { color: #5a1040 !important; }
 </style>
 </head>
 <body>
@@ -859,12 +894,12 @@ body.light-mode .dm-bubble-text { color: #6a1050 !important; }
 
 <!-- Leaderboard modal -->
 <div id="lb-modal" style="display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;background:rgba(14,9,18,0.93);">
-  <div style="background:linear-gradient(160deg,#1e1035,#110920);border:2px solid #c060a0;border-radius:4px;max-width:500px;width:93%;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(180,60,140,0.45),0 30px 60px rgba(0,0,0,0.8);position:relative;overflow:hidden;">
-    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#e060b8,#a888e0,#e060b8,transparent);"></div>
+  <div id="lb-inner" style="background:linear-gradient(160deg,#1e1035,#110920);border:2px solid #c060a0;border-radius:4px;max-width:500px;width:93%;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(180,60,140,0.45),0 30px 60px rgba(0,0,0,0.8);position:relative;overflow:hidden;">
+    <div class="modal-topbar" style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#e060b8,#a888e0,#e060b8,transparent);"></div>
     <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:2px solid #5a2855;flex-shrink:0;">
+    <div id="lb-header" style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:2px solid #5a2855;flex-shrink:0;">
       <div style="font-family:var(--font-pixel);font-size:0.78rem;letter-spacing:2px;background:linear-gradient(135deg,#f880cc,#c8a0f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">🏆 LEADERBOARD</div>
-      <button onclick="closeLB()" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;transition:color 0.2s;" onmouseover="this.style.color='#f0c0d8'" onmouseout="this.style.color='#9878b8'">✕</button>
+      <button class="modal-close-btn" onclick="closeLB()" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;transition:color 0.2s;">✕</button>
     </div>
     <!-- Game filter tabs -->
     <div id="lb-game-tabs" style="display:flex;overflow-x:auto;border-bottom:2px solid #5a2855;flex-shrink:0;scrollbar-width:none;-webkit-overflow-scrolling:touch;"></div>
@@ -892,11 +927,11 @@ body.light-mode .dm-bubble-text { color: #6a1050 !important; }
 
 <!-- Players modal -->
 <div id="players-modal" style="display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;background:rgba(14,9,18,0.93);">
-  <div style="background:linear-gradient(160deg,#1e1035,#110920);border:2px solid #c060a0;border-radius:4px;max-width:500px;width:93%;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(180,60,140,0.45),0 30px 60px rgba(0,0,0,0.8);position:relative;overflow:hidden;">
-    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#e060b8,#a888e0,#e060b8,transparent);"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:2px solid #5a2855;flex-shrink:0;">
+  <div id="players-inner" style="background:linear-gradient(160deg,#1e1035,#110920);border:2px solid #c060a0;border-radius:4px;max-width:500px;width:93%;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(180,60,140,0.45),0 30px 60px rgba(0,0,0,0.8);position:relative;overflow:hidden;">
+    <div class="modal-topbar" style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#e060b8,#a888e0,#e060b8,transparent);"></div>
+    <div id="players-header" style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:2px solid #5a2855;flex-shrink:0;">
       <div style="font-family:var(--font-pixel);font-size:0.78rem;letter-spacing:2px;background:linear-gradient(135deg,#f880cc,#c8a0f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">👥 PLAYERS</div>
-      <button onclick="closePlayers()" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;transition:color 0.2s;" onmouseover="this.style.color='#f0c0d8'" onmouseout="this.style.color='#9878b8'">✕</button>
+      <button class="modal-close-btn" onclick="closePlayers()" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;transition:color 0.2s;">✕</button>
     </div>
     <div id="players-list" style="overflow-y:auto;padding:0;flex:1;"></div>
   </div>
@@ -1102,6 +1137,7 @@ body.light-mode .dm-bubble-text { color: #6a1050 !important; }
   }
 
   let lbActiveGame = 'all';
+  let _userColorMap = {};
 
   async function openLB() {
     document.getElementById('user-dropdown').style.display = 'none';
@@ -1144,6 +1180,7 @@ body.light-mode .dm-bubble-text { color: #6a1050 !important; }
         db.collection('users').orderBy('name_lower').get(),
         me ? db.collection('dms').where('participants', 'array-contains', me.name.toLowerCase()).get() : Promise.resolve({ docs: [] }),
       ]);
+      snap.docs.forEach(d => { const u = d.data(); _userColorMap[u.name_lower] = u.color || '#f8e8f4'; });
       const unreadSet = new Set();
       dmSnap.docs.forEach(d => {
         const data = d.data();
@@ -1166,12 +1203,12 @@ body.light-mode .dm-bubble-text { color: #6a1050 !important; }
       list.innerHTML = users.map(u => {
         const isMe = me && me.name.toLowerCase() === u.name_lower;
         const bio = u.bio || '';
-        const nameColor = u.color || '#f0c0d8';
+        const nameColor = u.color || '#f8e8f4';
         return `<div style="padding:12px 22px;border-bottom:1px solid #2a1840;">
           <div style="display:flex;align-items:center;gap:10px;">
-            <div style="font-family:var(--font-pixel);font-size:0.52rem;color:${nameColor};letter-spacing:1px;white-space:nowrap;">${escHtml(u.name)}</div>
+            <div class="player-name" style="font-family:var(--font-pixel);font-size:0.52rem;color:${nameColor};letter-spacing:1px;white-space:nowrap;">${escHtml(u.name)}</div>
             ${isMe ? '<span style="font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;white-space:nowrap;">(you)</span>' : ''}
-            <span style="font-family:var(--font-pixel);font-size:0.52rem;color:${bio ? '#9878b8' : '#5a2855'};font-style:${bio ? 'normal' : 'italic'};">${bio ? escHtml(bio) : 'no bio yet'}</span>
+            <span class="player-bio" style="font-family:var(--font-pixel);font-size:0.52rem;color:${bio ? '#9878b8' : '#5a2855'};font-style:${bio ? 'normal' : 'italic'};">${bio ? escHtml(bio) : 'no bio yet'}</span>
             ${!isMe ? `<div onclick="openDM('${escHtml(u.name)}')" style="position:relative;margin-left:auto;flex-shrink:0;cursor:pointer;opacity:0.5;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.5'"><svg width="16" height="15" viewBox="0 0 16 15" fill="none"><rect x="0.7" y="0.7" width="14.6" height="9.6" rx="2.8" stroke="#9878b8" stroke-width="1.3"/><path d="M3.5 10.3 L5 13.2 L7.5 10.3" stroke="#9878b8" stroke-width="1.3" stroke-linejoin="round" fill="#1e1035"/></svg>${unreadSet.has(u.name_lower) ? '<div style="position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:#f8a0c0;border:1px solid #1e1035;"></div>' : ''}</div>` : ''}
           </div>
           ${isMe ? `<div style="border-top:1px solid #2a1840;margin-top:10px;padding-top:10px;">
@@ -1250,7 +1287,7 @@ body.light-mode .dm-bubble-text { color: #6a1050 !important; }
       const isNewRun = !prevMsg || prevMsg.from.toLowerCase() !== msg.from.toLowerCase();
       const showName = !isMe && isNewRun;
       return separator + `<div style="display:flex;flex-direction:column;align-items:${isMe ? 'flex-end' : 'flex-start'};">
-          ${showName ? `<div style="font-family:'Nunito',sans-serif;font-size:0.7rem;font-weight:700;color:#9878b8;margin-bottom:4px;margin-left:2px;">${escHtml(msg.from)}</div>` : ''}
+          ${showName ? `<div class="dm-sender-name" style="font-family:'Nunito',sans-serif;font-size:0.7rem;font-weight:700;color:${_userColorMap[msg.from.toLowerCase()] || '#f8e8f4'};margin-bottom:4px;margin-left:2px;">${escHtml(msg.from)}</div>` : ''}
           <div class="${isMe ? 'dm-bubble-me' : 'dm-bubble-them'}" style="max-width:75%;background:${isMe ? 'rgba(224,112,168,0.18)' : 'rgba(255,255,255,0.05)'};border:1px solid ${isMe ? '#c060a0' : '#3a2050'};border-radius:${isMe ? '10px 10px 2px 10px' : '10px 10px 10px 2px'};padding:8px 12px;">
             <div class="dm-bubble-text" style="font-family:'Nunito',sans-serif;font-size:0.88rem;font-weight:600;color:#f0c0d8;line-height:1.6;">${escHtml(msg.text)}</div>
           </div>
@@ -1387,9 +1424,10 @@ body.light-mode .dm-bubble-text { color: #6a1050 !important; }
       return;
     }
 
-    const usersSnap = await db.collection('users').get();
-    const colorMap = {};
-    usersSnap.docs.forEach(d => { const u = d.data(); colorMap[u.name_lower] = u.color || '#f0c0d8'; });
+    if (!Object.keys(_userColorMap).length) {
+      const usersSnap = await db.collection('users').get();
+      usersSnap.docs.forEach(d => { const u = d.data(); _userColorMap[u.name_lower] = u.color || '#f8e8f4'; });
+    }
 
     const fairNote = isAll ? `<div style="padding:8px 22px 6px;font-family:var(--font-pixel);font-size:0.3rem;color:#5a2855;letter-spacing:1px;text-align:center;">scores normalized 0–1000 for cross-game fairness ★ scroll for raw scores</div>` : '';
 
@@ -1398,13 +1436,13 @@ body.light-mode .dm-bubble-text { color: #6a1050 !important; }
       const date = e.date ? new Date(e.date).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '';
       const gameLbl = isAll ? `<span style="font-size:0.35rem;color:#c090b0;margin-left:6px;">${GAME_LABELS[e.game] || e.game}</span>` : '';
       const scoreDisplay = isAll ? `${Math.min(999, Math.round(e._norm))}<span style="font-size:0.35rem;color:#9878b8;">★</span>` : e.score.toLocaleString();
-      const nameColor = colorMap[(e.name || '').toLowerCase()] || '#f0c0d8';
+      const nameColor = _userColorMap[(e.name || '').toLowerCase()] || '#f8e8f4';
       const isTop = i < 3;
-      return `<div style="display:flex;align-items:center;gap:14px;padding:12px 22px;border-bottom:1px solid #2a1840;background:${isTop ? 'rgba(224,112,168,0.06)' : 'none'};transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.09)'" onmouseout="this.style.background='${isTop ? 'rgba(224,112,168,0.06)' : 'none'}'">
+      return `<div class="lb-entry" style="display:flex;align-items:center;gap:14px;padding:12px 22px;border-bottom:1px solid #2a1840;background:${isTop ? 'rgba(224,112,168,0.06)' : 'none'};transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.09)'" onmouseout="this.style.background='${isTop ? 'rgba(224,112,168,0.06)' : 'none'}'">
         <span style="min-width:28px;text-align:center;font-size:${i<3?'1.35':'1.1'}rem;">${medal}</span>
-        <span style="flex:1;font-family:var(--font-pixel);font-size:0.45rem;color:${nameColor};letter-spacing:1px;">${escHtml(e.name)}${gameLbl}</span>
-        <span style="font-family:var(--font-pixel);font-size:0.5rem;color:#d8c070;letter-spacing:1px;">${scoreDisplay}</span>
-        <span style="font-family:var(--font-pixel);font-size:0.34rem;color:#9878b8;min-width:48px;text-align:right;">${date}</span>
+        <span class="lb-name" style="flex:1;font-family:var(--font-pixel);font-size:0.45rem;color:${nameColor};letter-spacing:1px;">${escHtml(e.name)}${gameLbl}</span>
+        <span class="lb-score" style="font-family:var(--font-pixel);font-size:0.5rem;color:#d8c070;letter-spacing:1px;">${scoreDisplay}</span>
+        <span class="lb-date" style="font-family:var(--font-pixel);font-size:0.34rem;color:#9878b8;min-width:48px;text-align:right;">${date}</span>
       </div>`;
     }).join('');
   }

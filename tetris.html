@@ -267,11 +267,11 @@ function checkLines() {
       board.unshift(Array(COLS).fill(0));
     });
     flashRows = []; flashTimer = 0;
-    const pts = [0,100,300,500,800][full.length] * level;
+    const pts = [0,50,150,250,400][full.length] * level;
     score += pts;
     lines += full.length;
     level = Math.floor(lines/10)+1;
-    dropMs = Math.max(80, 800-(level-1)*70);
+    dropMs = Math.max(80, 800-(level-1)*100);
     restartDrop();
     updateHUD();
     spawnPiece();

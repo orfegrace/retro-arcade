@@ -949,7 +949,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     const pass = document.getElementById('si-pass').value;
     if (!name || !pass) { showError('si-error', 'fill in all fields'); return; }
     try {
-      await firebase.auth().signInWithEmailAndPassword(`${name.toLowerCase()}@retro-arcade.app`, pass);
+      await firebase.auth().signInWithEmailAndPassword(`${name.toLowerCase().replace(/\s+/g, '_')}@retro-arcade.app`, pass);
       playLetsPlaySound();
     } catch(e) {
       if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found' || e.code === 'auth/invalid-email') {
@@ -971,7 +971,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
       const nameLower = name.toLowerCase();
       const existing = await db.collection('users').where('name_lower', '==', nameLower).limit(1).get();
       if (!existing.empty) { showError('ca-error', 'name already taken'); return; }
-      const cred = await firebase.auth().createUserWithEmailAndPassword(`${nameLower}@retro-arcade.app`, pass);
+      const cred = await firebase.auth().createUserWithEmailAndPassword(`${nameLower.replace(/\s+/g, '_')}@retro-arcade.app`, pass);
       await cred.user.updateProfile({ displayName: name });
       await db.collection('users').add({ name, name_lower: nameLower, uid: cred.user.uid });
       playLetsPlaySound();

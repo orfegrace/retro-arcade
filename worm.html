@@ -80,10 +80,6 @@
     background-clip: text;
   }
 
-  .ov-scores { display: flex; gap: 36px; margin-top: 4px; }
-  .ov-stat { text-align: center; }
-  .ov-num  { font-family: 'Orbitron', monospace; font-size: 1.1rem; font-weight: 700; color: var(--pink); letter-spacing: 3px; }
-  .ov-lbl  { font-family: var(--font-pixel); font-size: 0.38rem; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 6px; }
 
   .legend {
     display: flex;
@@ -134,9 +130,8 @@ firebase.auth().onAuthStateChanged(u => { _arcadeUser = u; });
   <div id="overlay">
     <div class="ov-emoji" id="ov-emoji">🪱</div>
     <div class="ov-title"  id="ov-title">Worm Game</div>
-    <div class="ov-scores" id="ov-scores" style="display:none">
-      <div class="ov-stat"><div class="ov-num" id="ov-score">0</div><div class="ov-lbl">Score</div></div>
-      <div class="ov-stat"><div class="ov-num" id="ov-best">0</div><div class="ov-lbl">Best</div></div>
+    <div id="ov-scores" style="display:none;font-family:var(--font-pixel);font-size:0.42rem;color:#9878b8;letter-spacing:1px;margin-top:4px;" id="ov-scores">
+      Score: <span id="ov-score">0</span>
     </div>
     <div class="legend">
       <div class="leg-item"><div class="leg-dot" style="background:#f9a8d4;box-shadow:0 0 6px #f472b6"></div>+1 pt</div>
@@ -403,7 +398,6 @@ function showOverlay() {
     sc.style.display = 'flex';
     btns.style.display = 'flex';
     document.getElementById('ov-score').textContent = score;
-    document.getElementById('ov-best').textContent  = highScore;
   } else {
     sc.style.display = 'none';
     btns.style.display = 'none';
@@ -530,13 +524,10 @@ function render(now) {
 
     // ── HUD ──
     ctx.fillStyle = 'rgba(255,255,255,0.88)';
-    ctx.font      = '700 15px Nunito,sans-serif';
+    ctx.font      = '700 13px Orbitron,monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText(`Score  ${score}`, 12, 12);
-    ctx.fillStyle = 'rgba(255,255,255,0.33)';
-    ctx.font      = '600 13px Nunito,sans-serif';
-    ctx.fillText(`Best  ${highScore}`, 12, 33);
 
     // Speed indicator (subtle)
     const spd = Math.min(score / 43, 1);

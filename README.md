@@ -1,26 +1,7 @@
 # Retro Arcade
 
-A pastel pixel-style browser arcade with multiple mini games, account sign-in, score tracking, light/dark mode, and a shared leaderboard.
+A retro pixel art-style browser arcade with 9 mini games, account sign-in, score tracking, light/dark mode, players dm, and a shared leaderboard.
 
-## Overview
-
-Retro Arcade is a web-based collection of classic mini games redesigned with a soft neon, CRT-inspired interface. The project combines simple game mechanics with a consistent arcade theme, animated backgrounds, user accounts, and Firebase-based leaderboard storage.
-
-The site is designed as a personal arcade hub where users can sign in, select a game, play, and compare scores across different games.
-
-## Features
-
-* Retro pixel-art visual style
-* Light and dark mode toggle
-* User sign-in and account creation
-* Firebase Firestore leaderboard
-* Cross-game leaderboard with normalized scores
-* Game-specific score tabs
-* Animated card hover effects
-* CRT scanline overlay
-* Ambient background orbs, pixel stars, and shooting-star effects
-* Simple sound effects using the Web Audio API
-* Responsive game-card layout
 
 ## Games Included
 

@@ -900,8 +900,11 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
   <div id="lb-inner" style="background:linear-gradient(160deg,#1e1035,#110920);border:2px solid #c060a0;border-radius:4px;max-width:500px;width:93%;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(180,60,140,0.45),0 30px 60px rgba(0,0,0,0.8);position:relative;overflow:hidden;">
     <div class="modal-topbar" style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#e060b8,#a888e0,#e060b8,transparent);"></div>
     <!-- Header -->
-    <div id="lb-header" style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:2px solid #5a2855;flex-shrink:0;">
-      <div style="font-family:var(--font-pixel);font-size:0.78rem;letter-spacing:2px;background:linear-gradient(135deg,#f880cc,#c8a0f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">🏆 LEADERBOARD</div>
+    <div id="lb-header" style="display:flex;align-items:center;padding:18px 14px 14px 10px;border-bottom:2px solid #5a2855;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:6px;flex:1;">
+        <button class="dm-btn" onclick="closeLB();setTimeout(openUserMenu,0)" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;flex-shrink:0;">‹</button>
+        <div style="font-family:var(--font-pixel);font-size:0.78rem;letter-spacing:2px;background:linear-gradient(135deg,#f880cc,#c8a0f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">LEADERBOARD</div>
+      </div>
       <button class="modal-close-btn" onclick="playCloseSound();closeLB()" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;transition:color 0.2s;">✕</button>
     </div>
     <!-- Game filter tabs -->
@@ -932,8 +935,11 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
 <div id="players-modal" style="display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;background:rgba(14,9,18,0.93);">
   <div id="players-inner" style="background:linear-gradient(160deg,#1e1035,#110920);border:2px solid #c060a0;border-radius:4px;max-width:500px;width:93%;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(180,60,140,0.45),0 30px 60px rgba(0,0,0,0.8);position:relative;overflow:hidden;">
     <div class="modal-topbar" style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#e060b8,#a888e0,#e060b8,transparent);"></div>
-    <div id="players-header" style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:2px solid #5a2855;flex-shrink:0;">
-      <div style="font-family:var(--font-pixel);font-size:0.78rem;letter-spacing:2px;background:linear-gradient(135deg,#f880cc,#c8a0f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">👥 PLAYERS</div>
+    <div id="players-header" style="display:flex;align-items:center;padding:18px 14px 14px 10px;border-bottom:2px solid #5a2855;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:6px;flex:1;">
+        <button class="dm-btn" onclick="closePlayers();setTimeout(openUserMenu,0)" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;flex-shrink:0;">‹</button>
+        <div style="font-family:var(--font-pixel);font-size:0.78rem;letter-spacing:2px;background:linear-gradient(135deg,#f880cc,#c8a0f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">PLAYERS</div>
+      </div>
       <button class="modal-close-btn" onclick="playCloseSound();closePlayers()" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;transition:color 0.2s;">✕</button>
     </div>
     <div id="players-list" style="overflow-y:auto;padding:0;flex:1;"></div>
@@ -1070,6 +1076,14 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
     const hasUnread = document.getElementById('unread-dot').style.display !== 'none';
     document.getElementById('unread-dot').style.display = (!opening && hasUnread) ? 'block' : 'none';
     document.getElementById('unread-dot-menu').style.display = (opening && hasUnread) ? 'block' : 'none';
+  }
+
+  function openUserMenu() {
+    const dd = document.getElementById('user-dropdown');
+    dd.style.display = 'block';
+    const hasUnread = document.getElementById('unread-dot').style.display !== 'none';
+    document.getElementById('unread-dot').style.display = 'none';
+    document.getElementById('unread-dot-menu').style.display = hasUnread ? 'block' : 'none';
   }
   document.addEventListener('click', e => {
     if (!document.getElementById('user-menu-wrap').contains(e.target)) {

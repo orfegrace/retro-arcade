@@ -17,29 +17,37 @@ A retro pixel art-style browser arcade with 9 mini games, account sign-in, score
 
 ## Screenshots
 
-### Arcade Home - Dark Mode
+### Arcade Home + Menu Button (Dark Mode)
 
-<img width="1440" height="751" alt="Screenshot 2026-06-14 at 10 14 29 AM" src="https://github.com/user-attachments/assets/2f280dad-1291-4eb5-aa42-bc19b81872cb" />
+<img width="1440" height="706" alt="Screenshot 2026-06-15 at 3 15 06 PM" src="https://github.com/user-attachments/assets/42776d97-3f87-4cf9-806f-0cd178e77a37" />
 
-### Arcade Home - Light Mode
 
-<img width="1440" height="751" alt="Screenshot 2026-06-14 at 10 14 54 AM" src="https://github.com/user-attachments/assets/8a188f96-6fce-4124-a4f0-98fd3de70145" />
+### Arcade Home (Light Mode)
+
+<img width="1440" height="705" alt="Screenshot 2026-06-15 at 3 11 56 PM" src="https://github.com/user-attachments/assets/27f2386b-ccf8-45af-a6c9-19bda62bad18" />
 
 ### Leaderboard
 
-<img width="1439" height="747" alt="Screenshot 2026-06-14 at 10 14 41 AM" src="https://github.com/user-attachments/assets/07b14528-a584-4496-83a5-4ed77eb5ca48" />
+<img width="1440" height="691" alt="Screenshot 2026-06-15 at 3 14 53 PM" src="https://github.com/user-attachments/assets/c2ed1712-4213-4f32-b8f1-47e978e1269d" />
+
+### Players 
+<img width="1440" height="705" alt="Screenshot 2026-06-15 at 3 15 24 PM" src="https://github.com/user-attachments/assets/082a0f4c-9485-4d87-81d6-2b26709a3e83" />
 
 ### Hangman
 
-<img width="1440" height="754" alt="Screenshot 2026-06-14 at 10 16 35 AM" src="https://github.com/user-attachments/assets/533cbe40-600e-433f-ad38-c6792bbfae9f" />
+<img width="1440" height="694" alt="Screenshot 2026-06-15 at 3 12 53 PM" src="https://github.com/user-attachments/assets/c9b0c5b0-df0e-4ba5-bdd8-6bc83c9625ac" />
 
 ### Memory Match 
-<img width="1440" height="711" alt="Screenshot 2026-06-14 at 12 38 57 PM" src="https://github.com/user-attachments/assets/3a65b6df-fbdc-4e69-afff-7c7e028ea1ce" />
+<img width="1440" height="689" alt="Screenshot 2026-06-15 at 3 14 36 PM" src="https://github.com/user-attachments/assets/ce26ed30-2bd3-484c-a63f-016bc91d2a92" />
+
+
+### Tetris 
+<img width="1440" height="703" alt="Screenshot 2026-06-15 at 3 13 44 PM" src="https://github.com/user-attachments/assets/d5900700-de1e-4e5d-a850-ab09d333448c" />
 
 
 ### 2048
 
-<img width="1440" height="749" alt="Screenshot 2026-06-14 at 10 15 39 AM" src="https://github.com/user-attachments/assets/a4787cd4-09d8-4a47-9ff6-ab5e53d68485" />
+<img width="1440" height="689" alt="Screenshot 2026-06-15 at 3 13 25 PM" src="https://github.com/user-attachments/assets/dba092d1-a6f8-4b3c-86ec-de1edd5e3501" />
 
 
 ## Project Structure

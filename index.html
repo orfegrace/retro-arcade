@@ -1233,15 +1233,20 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     );
     if (dmConvoListener) { dmConvoListener(); dmConvoListener = null; }
     dmConvoListener = db.collection('dms').doc(convoId).onSnapshot(snap => {
-      _dmLastRead = (snap.data() || {}).lastRead || {};
-      _renderDMMessages();
+      const newLastRead = (snap.data() || {}).lastRead || {};
+      const theirKey = dmRecipient.toLowerCase();
+      const changed = JSON.stringify(newLastRead[theirKey]) !== JSON.stringify(_dmLastRead[theirKey]);
+      _dmLastRead = newLastRead;
+      if (changed) _renderDMMessages();
     });
     if (dmListener) { dmListener(); dmListener = null; }
     dmListener = db.collection('dms').doc(convoId).collection('messages')
       .orderBy('timestamp')
-      .onSnapshot(snap => {
-        _dmMessages = snap.docs.map(d => d.data());
-        // mark as read whenever new messages arrive while window is open
+      .onSnapshot({ includeMetadataChanges: false }, snap => {
+        const seen = new Set();
+        _dmMessages = snap.docs
+          .filter(d => { if (seen.has(d.id)) return false; seen.add(d.id); return true; })
+          .map(d => ({ _id: d.id, ...d.data() }));
         db.collection('dms').doc(convoId).set(
           { lastRead: { [me.name.toLowerCase()]: firebase.firestore.FieldValue.serverTimestamp() } },
           { merge: true }

@@ -1074,24 +1074,12 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
       let snap;
       if (isAll) {
         snap = await db.collection('leaderboard').get();
-        const withNorm = snap.docs.map(d => d.data())
-          .map(e => ({ ...e, _norm: normalizeScore(e.game, e.score) }));
-        // Best score per (player + game) — prevents spam, keeps all games competing
-        const bestByPlayerGame = {};
-        for (const e of withNorm) {
-          const key = e.name + '|' + e.game;
-          if (!bestByPlayerGame[key] || e._norm > bestByPlayerGame[key]._norm) bestByPlayerGame[key] = e;
-        }
-        sorted = Object.values(bestByPlayerGame).sort((a, b) => b._norm - a._norm);
+        sorted = snap.docs.map(d => d.data())
+          .map(e => ({ ...e, _norm: normalizeScore(e.game, e.score) }))
+          .sort((a, b) => b._norm - a._norm);
       } else {
         snap = await db.collection('leaderboard').where('game', '==', lbActiveGame).get();
-        const all = snap.docs.map(d => d.data()).sort((a, b) => b.score - a.score);
-        // Best score per player — each player appears once per game tab
-        const bestByPlayer = {};
-        for (const e of all) {
-          if (!bestByPlayer[e.name]) bestByPlayer[e.name] = e;
-        }
-        sorted = Object.values(bestByPlayer).sort((a, b) => b.score - a.score);
+        sorted = snap.docs.map(d => d.data()).sort((a, b) => b.score - a.score);
       }
     } catch(e) {
       console.error('[Leaderboard] fetch failed:', e);

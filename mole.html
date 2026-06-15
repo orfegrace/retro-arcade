@@ -163,6 +163,8 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
 const _fbCfg={apiKey:"AIzaSyAs4pZ-k8IPAAtk3dLM7Gy-oL4nLmOPN4g",authDomain:"retro-arcade-f61e1.firebaseapp.com",projectId:"retro-arcade-f61e1",storageBucket:"retro-arcade-f61e1.firebasestorage.app",messagingSenderId:"750905179148",appId:"1:750905179148:web:e27684e54bfd8e02680229"};
 if(!firebase.apps.length)firebase.initializeApp(_fbCfg);
 const db=firebase.firestore();
+let _arcadeUser = null;
+firebase.auth().onAuthStateChanged(u => { _arcadeUser = u; });
 </script>
 </head>
 <body>
@@ -448,12 +450,10 @@ function playExitSound() {
 }
 
 function saveToLeaderboard(game, score) {
-  try {
-    const user = firebase.auth().currentUser ? { name: firebase.auth().currentUser.displayName } : null;
-    if (!user) return;
-    db.collection('leaderboard').add({ name: user.name, game, score, date: new Date().toISOString() })
-      .catch(e => console.error('[Leaderboard] write failed:', e));
-  } catch(e) {}
+  if (!_arcadeUser) { console.warn('[Leaderboard] not logged in — score not saved'); return; }
+  db.collection('leaderboard').add({ name: _arcadeUser.displayName, game, score, date: new Date().toISOString() })
+    .then(() => console.log('[Leaderboard] saved:', game, score))
+    .catch(e => console.error('[Leaderboard] write failed:', e));
 }
 
 const MOON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';

@@ -1081,8 +1081,12 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
 
   /* ── User menu dropdown ── */
   function toggleUserMenu() {
-    if (document.getElementById('lb-modal').style.display !== 'none' ||
-        document.getElementById('players-modal').style.display !== 'none') return;
+    if (document.getElementById('lb-modal').style.display !== 'none') {
+      closeLB(); setTimeout(openUserMenu, 0); return;
+    }
+    if (document.getElementById('players-modal').style.display !== 'none') {
+      closePlayers(); setTimeout(openUserMenu, 0); return;
+    }
     const dd = document.getElementById('user-dropdown');
     const opening = dd.style.display === 'none';
     dd.style.display = opening ? 'block' : 'none';

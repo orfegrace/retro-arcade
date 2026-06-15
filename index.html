@@ -939,16 +939,16 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
 
 <!-- User menu (top-left, shown after login) -->
 <div id="user-menu-wrap" style="display:none;position:fixed;top:14px;left:14px;z-index:300;">
-  <button id="user-menu-btn" onclick="toggleUserMenu()"
+  <button id="user-menu-btn" onclick="playClickSound();toggleUserMenu()"
     style="position:relative;background:rgba(0,0,0,0.15);border:1.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:calc(6px + 0.34rem) 12px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:rgba(255,255,255,0.65);cursor:pointer;backdrop-filter:blur(8px);transition:background 0.2s,border-color 0.2s,color 0.2s,opacity 0.2s;display:flex;align-items:center;gap:6px;opacity:0.75;line-height:1;"
     onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.75'">
     <span id="user-menu-label">👤 </span>▾
     <div id="unread-dot" style="display:none;position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#f8a0c0;border:2px solid #0e0912;box-shadow:0 0 6px #f8a0c0;"></div>
   </button>
   <div id="user-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#1e1035;border:2px solid #5a2855;border-radius:4px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,0.6);overflow:hidden;">
-    <button onclick="openLB()" style="display:block;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">🏆 Leaderboard</button>
-    <button onclick="openPlayers()" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">👥 Players<div id="unread-dot-menu" style="display:none;width:8px;height:8px;border-radius:50%;background:#f8a0c0;box-shadow:0 0 6px #f8a0c0;flex-shrink:0;"></div></button>
-    <button onclick="doSignOut()" style="display:block;width:100%;background:none;border:none;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#c090b0;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.08)'" onmouseout="this.style.background='none'">Sign Out</button>
+    <button onclick="playClickSound();openLB()" style="display:block;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">🏆 Leaderboard</button>
+    <button onclick="playClickSound();openPlayers()" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">👥 Players<div id="unread-dot-menu" style="display:none;width:8px;height:8px;border-radius:50%;background:#f8a0c0;box-shadow:0 0 6px #f8a0c0;flex-shrink:0;"></div></button>
+    <button onclick="playClickSound();doSignOut()" style="display:block;width:100%;background:none;border:none;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#c090b0;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.08)'" onmouseout="this.style.background='none'">Sign Out</button>
   </div>
 </div>
 
@@ -1203,7 +1203,7 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
       list.innerHTML = users.map(u => {
         const isMe = me && me.name.toLowerCase() === u.name_lower;
         const bio = u.bio || '';
-        const nameColor = u.color || '#f8e8f4';
+        const nameColor = '#f8e8f4';
         return `<div style="padding:12px 22px;border-bottom:1px solid #2a1840;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="player-name" style="font-family:var(--font-pixel);font-size:0.52rem;color:${nameColor};letter-spacing:1px;white-space:nowrap;">${escHtml(u.name)}</div>
@@ -1372,7 +1372,7 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
     const bio = document.getElementById('bio-input').value.trim();
     try {
       const snap = await db.collection('users').where('uid', '==', uid).limit(1).get();
-      if (!snap.empty) await snap.docs[0].ref.update({ bio, color: selectedColor || '#f0c0d8' });
+      if (!snap.empty) await snap.docs[0].ref.update({ bio });
       openPlayers();
     } catch(e) {}
   }
@@ -1436,7 +1436,7 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
       const date = e.date ? new Date(e.date).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '';
       const gameLbl = isAll ? `<span style="font-size:0.35rem;color:#c090b0;margin-left:6px;">${GAME_LABELS[e.game] || e.game}</span>` : '';
       const scoreDisplay = isAll ? `${Math.min(999, Math.round(e._norm))}<span style="font-size:0.35rem;color:#9878b8;">★</span>` : e.score.toLocaleString();
-      const nameColor = _userColorMap[(e.name || '').toLowerCase()] || '#f8e8f4';
+      const nameColor = '#f8e8f4';
       const isTop = i < 3;
       return `<div class="lb-entry" style="display:flex;align-items:center;gap:14px;padding:12px 22px;border-bottom:1px solid #2a1840;background:${isTop ? 'rgba(224,112,168,0.06)' : 'none'};transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.09)'" onmouseout="this.style.background='${isTop ? 'rgba(224,112,168,0.06)' : 'none'}'">
         <span style="min-width:28px;text-align:center;font-size:${i<3?'1.35':'1.1'}rem;">${medal}</span>

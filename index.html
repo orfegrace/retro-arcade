@@ -1086,7 +1086,8 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
         const bio = u.bio || '';
         return `<div style="padding:12px 22px;border-bottom:1px solid #2a1840;">
           <div style="display:flex;align-items:center;gap:10px;">
-            <div style="font-family:var(--font-pixel);font-size:0.52rem;color:#f0c0d8;letter-spacing:1px;white-space:nowrap;">${escHtml(u.name)}${isMe ? ' <span style="color:#9878b8;font-size:0.38rem;">(you)</span>' : ''}</div>
+            <div style="font-family:var(--font-pixel);font-size:0.52rem;color:#f0c0d8;letter-spacing:1px;white-space:nowrap;">${escHtml(u.name)}</div>
+            ${isMe ? '<span style="font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;white-space:nowrap;">(you)</span>' : ''}
             <span style="font-family:var(--font-pixel);font-size:0.38rem;color:${bio ? '#9878b8' : '#5a2855'};font-style:${bio ? 'normal' : 'italic'};">${bio ? escHtml(bio) : 'no bio yet'}</span>
           </div>
           ${isMe ? `<div style="border-top:1px solid #2a1840;margin-top:10px;padding-top:10px;display:flex;align-items:center;gap:6px;">

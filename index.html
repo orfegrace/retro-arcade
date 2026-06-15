@@ -899,7 +899,7 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
     <!-- Header -->
     <div id="lb-header" style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:2px solid #5a2855;flex-shrink:0;">
       <div style="font-family:var(--font-pixel);font-size:0.78rem;letter-spacing:2px;background:linear-gradient(135deg,#f880cc,#c8a0f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">🏆 LEADERBOARD</div>
-      <button class="modal-close-btn" onclick="closeLB()" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;transition:color 0.2s;">✕</button>
+      <button class="modal-close-btn" onclick="playCloseSound();closeLB()" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;transition:color 0.2s;">✕</button>
     </div>
     <!-- Game filter tabs -->
     <div id="lb-game-tabs" style="display:flex;overflow-x:auto;border-bottom:2px solid #5a2855;flex-shrink:0;scrollbar-width:none;-webkit-overflow-scrolling:touch;"></div>
@@ -931,7 +931,7 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
     <div class="modal-topbar" style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#e060b8,#a888e0,#e060b8,transparent);"></div>
     <div id="players-header" style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:2px solid #5a2855;flex-shrink:0;">
       <div style="font-family:var(--font-pixel);font-size:0.78rem;letter-spacing:2px;background:linear-gradient(135deg,#f880cc,#c8a0f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">👥 PLAYERS</div>
-      <button class="modal-close-btn" onclick="closePlayers()" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;transition:color 0.2s;">✕</button>
+      <button class="modal-close-btn" onclick="playCloseSound();closePlayers()" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;transition:color 0.2s;">✕</button>
     </div>
     <div id="players-list" style="overflow-y:auto;padding:0;flex:1;"></div>
   </div>
@@ -1088,6 +1088,21 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
       osc.frequency.setValueAtTime(720, t);
       osc.frequency.exponentialRampToValueAtTime(540, t + 0.06);
       gain.gain.setValueAtTime(0.07, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      osc.start(t); osc.stop(t + 0.12);
+    } catch(e) {}
+  }
+
+  function playCloseSound() {
+    try {
+      const actx = new (window.AudioContext || window.webkitAudioContext)();
+      const t = actx.currentTime;
+      const osc = actx.createOscillator(), gain = actx.createGain();
+      osc.connect(gain); gain.connect(actx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(480, t);
+      osc.frequency.exponentialRampToValueAtTime(300, t + 0.07);
+      gain.gain.setValueAtTime(0.06, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
       osc.start(t); osc.stop(t + 0.12);
     } catch(e) {}

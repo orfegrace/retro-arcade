@@ -183,7 +183,9 @@
   100% { background-position: 0%   50%; }
 }
 
-/* ← Arcade back button — light mode */
+/* ← Arcade back button */
+.arcade-back { font-size: 0.33rem !important; }
+
 body.light-mode .arcade-back {
   background: rgba(240,220,235,0.92) !important;
   color: #7a3868 !important;

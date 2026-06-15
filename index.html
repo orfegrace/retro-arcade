@@ -948,7 +948,7 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
   <div id="user-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#1e1035;border:2px solid #5a2855;border-radius:4px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,0.6);overflow:hidden;">
     <button onclick="playClickSound();openLB()" style="display:block;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">🏆 Leaderboard</button>
     <button onclick="playClickSound();openPlayers()" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">👥 Players<div id="unread-dot-menu" style="display:none;width:8px;height:8px;border-radius:50%;background:#f8a0c0;box-shadow:0 0 6px #f8a0c0;flex-shrink:0;"></div></button>
-    <button onclick="playClickSound();doSignOut()" style="display:block;width:100%;background:none;border:none;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#c090b0;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.08)'" onmouseout="this.style.background='none'">Sign Out</button>
+    <button onclick="playSignOutSound();doSignOut()" style="display:block;width:100%;background:none;border:none;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#c090b0;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.08)'" onmouseout="this.style.background='none'">Sign Out</button>
   </div>
 </div>
 
@@ -1040,7 +1040,10 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
   }
 
   async function doSignOut() {
-    document.getElementById('user-dropdown').style.display = 'none';
+    ['user-dropdown','lb-modal','players-modal','dm-modal'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
     await firebase.auth().signOut();
   }
 
@@ -1079,15 +1082,14 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
     try {
       const actx = new (window.AudioContext || window.webkitAudioContext)();
       const t = actx.currentTime;
-      [523, 659, 784].forEach((freq, i) => {
-        const osc = actx.createOscillator(), gain = actx.createGain();
-        osc.connect(gain); gain.connect(actx.destination);
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(freq, t + i * 0.07);
-        gain.gain.setValueAtTime(0.13, t + i * 0.07);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.1);
-        osc.start(t + i * 0.07); osc.stop(t + i * 0.07 + 0.12);
-      });
+      const osc = actx.createOscillator(), gain = actx.createGain();
+      osc.connect(gain); gain.connect(actx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(720, t);
+      osc.frequency.exponentialRampToValueAtTime(540, t + 0.06);
+      gain.gain.setValueAtTime(0.07, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      osc.start(t); osc.stop(t + 0.12);
     } catch(e) {}
   }
 
@@ -1103,6 +1105,22 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
         gain.gain.setValueAtTime(0.13, t + i * 0.08);
         gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.18);
         osc.start(t + i * 0.08); osc.stop(t + i * 0.08 + 0.2);
+      });
+    } catch(e) {}
+  }
+
+  function playSignOutSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const t = ctx.currentTime;
+      [523, 415, 330, 262].forEach((freq, i) => {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t + i * 0.09);
+        gain.gain.setValueAtTime(0.11, t + i * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.09 + 0.2);
+        osc.start(t + i * 0.09); osc.stop(t + i * 0.09 + 0.22);
       });
     } catch(e) {}
   }

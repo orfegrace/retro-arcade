@@ -200,7 +200,7 @@
 .arcade-back:hover { opacity: 1 !important; }
 
 body.light-mode .arcade-back {
-  background: rgba(0,0,0,0.08) !important;
-  color: rgba(80,30,60,0.7) !important;
-  border-color: rgba(180,120,160,0.2) !important;
+  background: rgba(253,240,248,0.85) !important;
+  color: #9a3068 !important;
+  border-color: #e8c8dc !important;
 }

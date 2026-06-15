@@ -1511,7 +1511,7 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
       const date = e.date ? new Date(e.date).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '';
       const gameLbl = isAll ? `<span style="font-size:0.35rem;color:#c090b0;margin-left:6px;">${GAME_LABELS[e.game] || e.game}</span>` : '';
       const adj = e._displayAdj || 0;
-      const scoreDisplay = isAll ? `${Math.min(999, Math.round(e._norm)) + adj}<span style="font-size:0.35rem;color:#9878b8;">★</span>` : Math.round(e.score + adj).toLocaleString('en-US');
+      const scoreDisplay = isAll ? `${Math.max(0, Math.min(999, Math.round(e._norm)) + adj)}<span style="font-size:0.35rem;color:#9878b8;">★</span>` : Math.max(0, Math.round(e.score + adj)).toLocaleString('en-US');
       const nameColor = '#f8e8f4';
       const isTop = i < 3;
       return `<div class="lb-entry" style="display:flex;align-items:center;gap:14px;padding:12px 22px;border-bottom:1px solid #2a1840;background:${isTop ? 'rgba(224,112,168,0.06)' : 'none'};transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.09)'" onmouseout="this.style.background='${isTop ? 'rgba(224,112,168,0.06)' : 'none'}'">

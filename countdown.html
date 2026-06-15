@@ -632,6 +632,7 @@ function toggleTheme() {
 if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
 document.getElementById('theme-toggle').innerHTML = document.body.classList.contains('light-mode') ? MOON_SVG : '☼';
 function saveToLeaderboard(game, score) {
+  if (score < 0) score = 0;
   if (!_arcadeUser) { console.warn('[Leaderboard] not logged in — score not saved'); return; }
   db.collection('leaderboard').add({ name: _arcadeUser.displayName, game, score, date: new Date().toISOString() })
     .then(() => console.log('[Leaderboard] saved:', game, score))

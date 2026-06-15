@@ -588,6 +588,20 @@ body.light-mode .dm-bubble-me { background: rgba(220,100,170,0.18) !important; b
 body.light-mode .dm-bubble-them { background: rgba(200,150,220,0.12) !important; border-color: #d0a0d8 !important; }
 body.light-mode .dm-bubble-text { color: #6a1050 !important; }
 
+/* Notification dot */
+@keyframes dot-breathe {
+  0%,100% { transform: scale(1);    box-shadow: 0 0 4px 1px rgba(248,160,192,0.5); }
+  50%      { transform: scale(1.35); box-shadow: 0 0 10px 3px rgba(248,160,192,0.85); }
+}
+.notif-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #f8a0c0;
+  border: 1.5px solid #0e0912;
+  animation: dot-breathe 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+body.light-mode .notif-dot { border-color: #fdf0f8; }
+
 /* Leaderboard light mode */
 body.light-mode #lb-modal { background: rgba(220,180,210,0.55) !important; }
 body.light-mode #lb-inner { background: linear-gradient(160deg,#fff5fb,#fce8f4) !important; border-color: #e090c8 !important; box-shadow: 0 0 40px rgba(200,80,160,0.15), 0 20px 40px rgba(0,0,0,0.1) !important; }
@@ -962,12 +976,11 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
   <button id="user-menu-btn" onclick="playClickSound();toggleUserMenu()"
     style="position:relative;background:rgba(0,0,0,0.15);border:1.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:calc(6px + 0.34rem) 12px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:rgba(255,255,255,0.65);cursor:pointer;backdrop-filter:blur(8px);transition:background 0.2s,border-color 0.2s,color 0.2s,opacity 0.2s;display:flex;align-items:center;gap:6px;opacity:0.75;line-height:1;"
     onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.75'">
-    <span id="user-menu-label"></span><span style="font-size:0.55rem;line-height:1;position:relative;top:-1px;">▾</span>
-    <div id="unread-dot" style="display:none;position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#f8a0c0;border:2px solid #0e0912;box-shadow:0 0 6px #f8a0c0;"></div>
+    <span id="user-menu-label"></span><span id="user-menu-arrow" style="font-size:0.55rem;line-height:1;position:relative;top:-1px;">▾</span>
   </button>
   <div id="user-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#1e1035;border:2px solid #5a2855;border-radius:4px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,0.6);overflow:hidden;">
     <button onclick="playClickSound();openLB()" style="display:block;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">🏆 Leaderboard</button>
-    <button onclick="playClickSound();openPlayers()" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">👥 Players<div id="unread-dot-menu" style="display:none;width:8px;height:8px;border-radius:50%;background:#f8a0c0;box-shadow:0 0 6px #f8a0c0;flex-shrink:0;"></div></button>
+    <button onclick="playClickSound();openPlayers()" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">👥 Players<div id="unread-dot-menu" class="notif-dot" style="display:none;"></div></button>
     <button onclick="playSignOutSound();doSignOut()" style="display:block;width:100%;background:none;border:none;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#c090b0;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.08)'" onmouseout="this.style.background='none'">Sign Out</button>
   </div>
 </div>
@@ -1090,24 +1103,30 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
     const dd = document.getElementById('user-dropdown');
     const opening = dd.style.display === 'none';
     dd.style.display = opening ? 'block' : 'none';
-    const hasUnread = document.getElementById('unread-dot').style.display !== 'none';
-    document.getElementById('unread-dot').style.display = (!opening && hasUnread) ? 'block' : 'none';
-    document.getElementById('unread-dot-menu').style.display = (opening && hasUnread) ? 'block' : 'none';
+    document.getElementById('unread-dot-menu').style.display = (opening && _hasUnread) ? 'block' : 'none';
+  }
+
+  function _updateNotifUI() {
+    const arrow = document.getElementById('user-menu-arrow');
+    if (!arrow) return;
+    if (_hasUnread) {
+      arrow.innerHTML = '<span class="notif-dot" style="display:inline-block;position:relative;top:1px;"></span>';
+    } else {
+      arrow.innerHTML = '▾';
+      arrow.style.fontSize = '0.55rem';
+      arrow.style.top = '-1px';
+    }
   }
 
   function openUserMenu() {
     const dd = document.getElementById('user-dropdown');
     dd.style.display = 'block';
-    const hasUnread = document.getElementById('unread-dot').style.display !== 'none';
-    document.getElementById('unread-dot').style.display = 'none';
-    document.getElementById('unread-dot-menu').style.display = hasUnread ? 'block' : 'none';
+    document.getElementById('unread-dot-menu').style.display = _hasUnread ? 'block' : 'none';
   }
   document.addEventListener('click', e => {
     if (!document.getElementById('user-menu-wrap').contains(e.target)) {
       document.getElementById('user-dropdown').style.display = 'none';
-      const hasUnread = document.getElementById('unread-dot-menu').style.display !== 'none';
       document.getElementById('unread-dot-menu').style.display = 'none';
-      if (hasUnread) document.getElementById('unread-dot').style.display = 'block';
     }
   });
 
@@ -1309,6 +1328,7 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
   let dmConvoListener = null;
   let dmRecipient = '';
   let _unreadListener = null;
+  let _hasUnread = false;
 
   function startUnreadListener() {
     const me = getSession();
@@ -1326,8 +1346,9 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
           const readTime = myLastRead ? (myLastRead.toDate ? myLastRead.toDate() : new Date(myLastRead)) : null;
           return !readTime || lastMsgTime > readTime;
         });
+        _hasUnread = hasUnread;
+        _updateNotifUI();
         const dropdownOpen = document.getElementById('user-dropdown').style.display !== 'none';
-        document.getElementById('unread-dot').style.display = (hasUnread && !dropdownOpen) ? 'block' : 'none';
         document.getElementById('unread-dot-menu').style.display = (hasUnread && dropdownOpen) ? 'block' : 'none';
       });
   }
@@ -1562,7 +1583,7 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
       startUnreadListener();
     } else {
       if (_unreadListener) { _unreadListener(); _unreadListener = null; }
-      document.getElementById('unread-dot').style.display = 'none';
+      _hasUnread = false; _updateNotifUI();
       document.getElementById('auth-popup').style.display = 'flex';
       document.getElementById('user-menu-wrap').style.display = 'none';
       document.getElementById('theme-toggle').style.display = 'none';

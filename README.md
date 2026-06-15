@@ -60,17 +60,6 @@ The site is designed as a personal arcade hub where users can sign in, select a 
 
 <img width="1440" height="749" alt="Screenshot 2026-06-14 at 10 15 39 AM" src="https://github.com/user-attachments/assets/a4787cd4-09d8-4a47-9ff6-ab5e53d68485" />
 
-## Tech Stack
-
-* HTML
-* CSS
-* JavaScript
-* Firebase Firestore
-* Google Fonts
-
-  * VT323
-  * Silkscreen
-* Web Audio API
 
 ## Project Structure
 
@@ -98,36 +87,6 @@ User Menu
 └── Sign Out
 ```
 
-## How to Run Locally
-
-1. Clone this repository.
-
-```bash
-git clone https://github.com/your-username/retro-arcade.git
-```
-
-2. Open the project folder.
-
-```bash
-cd retro-arcade
-```
-
-3. Run the project with a local server.
-
-Using VS Code Live Server is the easiest option.
-
-Or run:
-
-```bash
-python3 -m http.server 8000
-```
-
-Then open:
-
-```text
-http://localhost:8000
-```
-
 ## Firebase Setup
 
 This project uses Firebase Firestore for:
@@ -141,35 +100,7 @@ To use your own Firebase project:
 1. Create a Firebase project.
 2. Enable Firestore Database.
 3. Add your Firebase configuration to the project.
-4. Create Firestore collections such as:
-
-```text
-users
-leaderboard
-```
-
-## Security Notes
-
-The current account system is intended for a personal or demo arcade project. For a public deployment, Firebase Authentication is recommended instead of storing passwords directly in Firestore.
-
-Recommended improvements before public release:
-
-* Replace custom password storage with Firebase Authentication
-* Add password hashing if keeping a custom account system
-* Add stronger Firestore security rules
-* Move Firebase configuration into a separate setup file
-* Add score validation to reduce fake leaderboard submissions
-
-## Future Improvements
-
-* Add mobile-specific controls for every game
-* Add sound settings
-* Add player avatars
-* Add achievements
-* Add difficulty levels
-* Add game instruction pages
-* Add persistent user preferences
-* Improve accessibility and keyboard navigation
+4. Create Firestore collections
 
 ## Author
 

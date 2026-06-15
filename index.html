@@ -1270,7 +1270,7 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
         if (isMe) myBio = bio;
         const nameColor = '#f8e8f4';
         return `<div style="padding:12px 22px;border-bottom:1px solid #2a1840;">
-          <div style="display:flex;align-items:center;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;min-height:28px;">
             <div class="player-name" style="font-family:var(--font-pixel);font-size:0.52rem;color:${nameColor};letter-spacing:1px;white-space:nowrap;">${escHtml(u.name)}</div>
             ${isMe ? '<span style="font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;white-space:nowrap;">(you)</span>' : ''}
             <span class="player-bio" data-empty="${bio ? 'false' : 'true'}" style="font-family:var(--font-pixel);font-size:0.52rem;color:${bio ? '#9878b8' : '#5a2855'};font-style:${bio ? 'normal' : 'italic'};">${bio ? escHtml(bio) : 'no bio yet'}</span>

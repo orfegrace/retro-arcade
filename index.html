@@ -1072,14 +1072,13 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     try {
       let snap;
       if (isAll) {
-        snap = await db.collection('leaderboard').orderBy('score', 'desc').limit(500).get();
+        snap = await db.collection('leaderboard').orderBy('score', 'desc').get();
         sorted = snap.docs.map(d => d.data())
           .map(e => ({ ...e, _norm: normalizeScore(e.game, e.score) }))
-          .sort((a, b) => b._norm - a._norm)
-          .slice(0, 50);
+          .sort((a, b) => b._norm - a._norm);
       } else {
-        snap = await db.collection('leaderboard').where('game', '==', lbActiveGame).limit(500).get();
-        sorted = snap.docs.map(d => d.data()).sort((a, b) => b.score - a.score).slice(0, 50);
+        snap = await db.collection('leaderboard').where('game', '==', lbActiveGame).get();
+        sorted = snap.docs.map(d => d.data()).sort((a, b) => b.score - a.score);
       }
     } catch(e) {
       console.error('[Leaderboard] fetch failed:', e);

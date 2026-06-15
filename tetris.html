@@ -657,7 +657,7 @@ document.getElementById('theme-toggle').innerHTML =
 function saveToLeaderboard(game, score) {
   try {
     const user = JSON.parse(localStorage.getItem('arcadeSession') || 'null');
-    if (!user) return;
+    if (!user || !score) return;
     db.collection('leaderboard').add({ name: user.name, game, score, date: new Date().toISOString() })
       .catch(e => console.error('[Leaderboard] write failed:', e));
   } catch(e) {}

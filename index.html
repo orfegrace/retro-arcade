@@ -1042,7 +1042,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   function normalizeScore(game, raw) {
     const cap = SCORE_CAPS[game] || 1000;
     const ratio = (game === 'runner' || game === 'worm') ? Math.sqrt(raw / cap) : raw / cap;
-    return Math.min(999, Math.round(1000 * (1 - Math.pow(0.1, ratio))));
+    return 1000 * (1 - Math.pow(0.1, ratio));
   }
 
   let lbActiveGame = 'all';
@@ -1105,13 +1105,13 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
       return;
     }
 
-    const fairNote = isAll ? `<div style="padding:8px 22px 6px;font-family:var(--font-pixel);font-size:0.3rem;color:#5a2855;letter-spacing:1px;">★ scores normalized 0–1000 for cross-game fairness · open a game tab for raw scores</div>` : '';
+    const fairNote = isAll ? `<div style="padding:8px 22px 6px;font-family:var(--font-pixel);font-size:0.3rem;color:#5a2855;letter-spacing:1px;">scores normalized 0–1000 for cross-game fairness ★ scroll for raw scores</div>` : '';
 
     entriesEl.innerHTML = fairNote + sorted.map((e, i) => {
       const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span style="font-family:var(--font-pixel);font-size:0.4rem;color:#9878b8;min-width:22px;display:inline-block;text-align:center;">${i+1}</span>`;
       const date = e.date ? new Date(e.date).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '';
       const gameLbl = isAll ? `<span style="font-size:0.35rem;color:#c090b0;margin-left:6px;">${GAME_LABELS[e.game] || e.game}</span>` : '';
-      const scoreDisplay = isAll ? `${e._norm}<span style="font-size:0.35rem;color:#9878b8;">★</span>` : e.score.toLocaleString();
+      const scoreDisplay = isAll ? `${Math.min(999, Math.round(e._norm))}<span style="font-size:0.35rem;color:#9878b8;">★</span>` : e.score.toLocaleString();
       const isTop = i < 3;
       return `<div style="display:flex;align-items:center;gap:14px;padding:12px 22px;border-bottom:1px solid #2a1840;background:${isTop ? 'rgba(224,112,168,0.06)' : 'none'};transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.09)'" onmouseout="this.style.background='${isTop ? 'rgba(224,112,168,0.06)' : 'none'}'">
         <span style="min-width:28px;text-align:center;font-size:${i<3?'1.35':'1.1'}rem;">${medal}</span>

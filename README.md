@@ -75,18 +75,27 @@ The site is designed as a personal arcade hub where users can sign in, select a 
 ## Project Structure
 
 ```text
+```text
 retro-arcade/
-├── index.html
-├── theme.css
-├── hangman.html
-├── memory.html
-├── worm.html
-├── tetris.html
-├── plinko.html
-├── 2048.html
-├── runner.html
-├── mole.html
-└── countdown.html/
+├── index.html              # main arcade homepage
+├── hangman.html            # hangman game
+├── memory.html             # memory card game
+├── worm.html               # worm/snake-style game
+├── tetris.html             # tetris game
+├── plinko.html             # plinko game
+├── 2048.html               # 2048 puzzle game
+├── runner.html             # runner game
+├── mole.html               # whack-a-mole game
+└── countdown.html          # countdown/timer page
+```
+
+The top user menu includes:
+
+```text
+User Menu
+├── Leaderboard
+├── Players
+└── Sign Out
 ```
 
 ## How to Run Locally

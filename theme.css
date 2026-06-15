@@ -184,10 +184,23 @@
 }
 
 /* ← Arcade back button */
-.arcade-back { font-size: 0.33rem !important; }
+.arcade-back {
+  background: rgba(0,0,0,0.15) !important;
+  border: 1.5px solid rgba(255,255,255,0.1) !important;
+  border-radius: 8px !important;
+  padding: calc(6px + 0.34rem) 12px !important;
+  font-size: 0.32rem !important;
+  letter-spacing: 1px !important;
+  color: rgba(255,255,255,0.65) !important;
+  backdrop-filter: blur(8px) !important;
+  opacity: 0.75 !important;
+  line-height: 1 !important;
+  transition: opacity 0.2s !important;
+}
+.arcade-back:hover { opacity: 1 !important; }
 
 body.light-mode .arcade-back {
-  background: rgba(240,220,235,0.92) !important;
-  color: #7a3868 !important;
-  border-color: #d0a0c0 !important;
+  background: rgba(0,0,0,0.08) !important;
+  color: rgba(80,30,60,0.7) !important;
+  border-color: rgba(180,120,160,0.2) !important;
 }

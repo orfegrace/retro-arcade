@@ -828,7 +828,7 @@ function showFaceFeatures() {
 function endGame(won) {
   gameOver = true;
   const correctPositions = [...currentWord].filter(ch => guessed.has(ch)).length;
-  const hangmanScore = won ? (MAX_WRONG - wrongCount) * 110 + currentWord.length * 23 : correctPositions * 17 + currentWord.length * 13;
+  const hangmanScore = won ? (MAX_WRONG - wrongCount) * 110 + currentWord.length * 23 : correctPositions * 10;
   saveToLeaderboard('hangman', hangmanScore);
   document.getElementById('msg-score').textContent = `Score: ${hangmanScore}`;
   const overlay = document.getElementById('msg-overlay');

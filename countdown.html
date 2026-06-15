@@ -297,12 +297,12 @@ function newGame() {
   clearInterval(timerInterval);
   history = []; selA = selOp = selB = null; gameOver = false;
 
-  // Pick 6 numbers: 1 large + 5 small (common variant)
+  // Pick 6 numbers: 2 large + 4 small
   const largePool = [...LARGE].sort(() => Math.random() - 0.5);
   const smallPool = [...SMALL].sort(() => Math.random() - 0.5);
-  available = [largePool[0], ...smallPool.slice(0, 5)].sort((a,b) => b - a);
+  available = [...largePool.slice(0, 2), ...smallPool.slice(0, 4)].sort((a,b) => b - a);
 
-  target = 100 + Math.floor(Math.random() * 900);
+  target = 301 + Math.floor(Math.random() * 699);
   document.getElementById('target').textContent = target;
   document.getElementById('history').textContent = '';
   setExpr(HINT_HTML, true);
@@ -446,7 +446,7 @@ function timeUp() {
 
 function showResult(exact, val) {
   const diff = Math.abs(val - target);
-  const cdScore = exact ? 1000 + timerSecs * 11 : Math.max(0, 1000 - diff * 47);
+  const cdScore = exact ? 800 + timerSecs * 7 : diff <= 5 ? 500 : diff <= 10 ? 300 : diff <= 20 ? 100 : 0;
   saveToLeaderboard('countdown', cdScore);
   document.getElementById('ov-score').textContent = `Score: ${cdScore}`;
   const ov = document.getElementById('result-overlay');

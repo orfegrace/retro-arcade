@@ -1033,15 +1033,16 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     countdown: '🧮 Countdown'
   };
 
-  /* Score a "great" player would realistically achieve — maps to 1000 in ALL tab */
+  /* Score a skilled player realistically achieves in a great game — maps to 1000 in ALL tab */
   const SCORE_CAPS = {
-    hangman: 2000, memory: 2500, worm: 100, tetris: 12000,
-    plinko: 20000, '2048': 50000, runner: 5000, countdown: 2500, mole: 500
+    hangman: 800, memory: 900, worm: 300, tetris: 8000,
+    plinko: 3000, '2048': 25000, runner: 2000, countdown: 1100, mole: 300
   };
 
   function normalizeScore(game, raw) {
     const cap = SCORE_CAPS[game] || 1000;
-    return Math.min(1000, Math.round(raw / cap * 1000));
+    const ratio = (game === 'runner' || game === 'worm') ? Math.sqrt(raw / cap) : raw / cap;
+    return Math.round(1000 * (1 - Math.pow(0.1, ratio)));
   }
 
   let lbActiveGame = 'all';
@@ -1072,13 +1073,25 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     try {
       let snap;
       if (isAll) {
-        snap = await db.collection('leaderboard').orderBy('score', 'desc').get();
-        sorted = snap.docs.map(d => d.data())
-          .map(e => ({ ...e, _norm: normalizeScore(e.game, e.score) }))
-          .sort((a, b) => b._norm - a._norm);
+        snap = await db.collection('leaderboard').get();
+        const withNorm = snap.docs.map(d => d.data())
+          .map(e => ({ ...e, _norm: normalizeScore(e.game, e.score) }));
+        // Best score per (player + game) — prevents spam, keeps all games competing
+        const bestByPlayerGame = {};
+        for (const e of withNorm) {
+          const key = e.name + '|' + e.game;
+          if (!bestByPlayerGame[key] || e._norm > bestByPlayerGame[key]._norm) bestByPlayerGame[key] = e;
+        }
+        sorted = Object.values(bestByPlayerGame).sort((a, b) => b._norm - a._norm);
       } else {
         snap = await db.collection('leaderboard').where('game', '==', lbActiveGame).get();
-        sorted = snap.docs.map(d => d.data()).sort((a, b) => b.score - a.score);
+        const all = snap.docs.map(d => d.data()).sort((a, b) => b.score - a.score);
+        // Best score per player — each player appears once per game tab
+        const bestByPlayer = {};
+        for (const e of all) {
+          if (!bestByPlayer[e.name]) bestByPlayer[e.name] = e;
+        }
+        sorted = Object.values(bestByPlayer).sort((a, b) => b.score - a.score);
       }
     } catch(e) {
       console.error('[Leaderboard] fetch failed:', e);

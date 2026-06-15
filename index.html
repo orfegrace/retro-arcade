@@ -1072,6 +1072,26 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     document.getElementById('lb-modal').style.display = 'none';
   }
 
+  const PLAYER_COLORS = [
+    { value: '#f0c0d8', label: 'Rose' },
+    { value: '#e070a8', label: 'Pink' },
+    { value: '#88c0b0', label: 'Mint' },
+    { value: '#d8c070', label: 'Gold' },
+    { value: '#70c8f0', label: 'Sky' },
+    { value: '#f0a070', label: 'Peach' },
+    { value: '#90d890', label: 'Sage' },
+    { value: '#f0e0a0', label: 'Cream' },
+  ];
+
+  let selectedColor = '';
+
+  function selectColor(val) {
+    selectedColor = val;
+    document.querySelectorAll('.color-swatch').forEach(el => {
+      el.style.outline = el.dataset.color === val ? '2px solid #fff' : '2px solid transparent';
+    });
+  }
+
   async function openPlayers() {
     document.getElementById('user-dropdown').style.display = 'none';
     document.getElementById('players-modal').style.display = 'flex';
@@ -1080,19 +1100,32 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     const me = getSession();
     try {
       const snap = await db.collection('users').orderBy('name_lower').get();
-      const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const users = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => {
+          const aMe = me && me.name.toLowerCase() === a.name_lower;
+          const bMe = me && me.name.toLowerCase() === b.name_lower;
+          return aMe ? 1 : bMe ? -1 : 0;
+        });
       list.innerHTML = users.map(u => {
         const isMe = me && me.name.toLowerCase() === u.name_lower;
         const bio = u.bio || '';
+        const nameColor = u.color || '#f0c0d8';
+        if (isMe) selectedColor = nameColor;
+        const swatches = PLAYER_COLORS.map(c =>
+          `<div class="color-swatch" data-color="${c.value}" onclick="selectColor('${c.value}')" title="${c.label}" style="width:12px;height:12px;border-radius:50%;background:${c.value};cursor:pointer;outline:${nameColor === c.value ? '2px solid #fff' : '2px solid transparent'};outline-offset:2px;flex-shrink:0;"></div>`
+        ).join('');
         return `<div style="padding:12px 22px;border-bottom:1px solid #2a1840;">
           <div style="display:flex;align-items:center;gap:10px;">
-            <div style="font-family:var(--font-pixel);font-size:0.52rem;color:#f0c0d8;letter-spacing:1px;white-space:nowrap;">${escHtml(u.name)}</div>
+            <div style="font-family:var(--font-pixel);font-size:0.52rem;color:${nameColor};letter-spacing:1px;white-space:nowrap;">${escHtml(u.name)}</div>
             ${isMe ? '<span style="font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;white-space:nowrap;">(you)</span>' : ''}
             <span style="font-family:var(--font-pixel);font-size:0.38rem;color:${bio ? '#9878b8' : '#5a2855'};font-style:${bio ? 'normal' : 'italic'};">${bio ? escHtml(bio) : 'no bio yet'}</span>
           </div>
-          ${isMe ? `<div style="border-top:1px solid #2a1840;margin-top:10px;padding-top:10px;display:flex;align-items:center;gap:6px;">
-            <input id="bio-input" value="${escHtml(bio)}" maxlength="80" placeholder="describe yourself..." style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #5a2855;border-radius:3px;padding:5px 8px;font-family:var(--font-pixel);font-size:0.38rem;color:#c0a0d8;outline:none;" onkeydown="if(event.key==='Enter')saveBio('${u.id}')">
-            <button onclick="saveBio('${u.id}')" style="background:rgba(224,112,168,0.15);border:1px solid #5a2855;border-radius:3px;padding:5px 10px;font-family:var(--font-pixel);font-size:0.38rem;color:#f0c0d8;cursor:pointer;white-space:nowrap;flex-shrink:0;">Save</button>
+          ${isMe ? `<div style="border-top:1px solid #2a1840;margin-top:10px;padding-top:10px;display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;gap:6px;">${swatches}</div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <input id="bio-input" value="${escHtml(bio)}" maxlength="80" placeholder="describe yourself..." style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #5a2855;border-radius:3px;padding:5px 8px;font-family:var(--font-pixel);font-size:0.38rem;color:#c0a0d8;outline:none;" onkeydown="if(event.key==='Enter')saveProfile('${u.id}')">
+              <button onclick="saveProfile('${u.id}')" style="background:rgba(224,112,168,0.15);border:1px solid #5a2855;border-radius:3px;padding:5px 10px;font-family:var(--font-pixel);font-size:0.38rem;color:#f0c0d8;cursor:pointer;white-space:nowrap;flex-shrink:0;">Save</button>
+            </div>
           </div>` : ''}
         </div>`;
       }).join('');
@@ -1105,10 +1138,10 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     document.getElementById('players-modal').style.display = 'none';
   }
 
-  async function saveBio(userId) {
+  async function saveProfile(userId) {
     const bio = document.getElementById('bio-input').value.trim();
     try {
-      await db.collection('users').doc(userId).update({ bio });
+      await db.collection('users').doc(userId).update({ bio, color: selectedColor || '#f0c0d8' });
       openPlayers();
     } catch(e) {}
   }

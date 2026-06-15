@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="theme.css">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=Silkscreen&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 const _fbCfg={apiKey:"AIzaSyAs4pZ-k8IPAAtk3dLM7Gy-oL4nLmOPN4g",authDomain:"retro-arcade-f61e1.firebaseapp.com",projectId:"retro-arcade-f61e1",storageBucket:"retro-arcade-f61e1.firebasestorage.app",messagingSenderId:"750905179148",appId:"1:750905179148:web:e27684e54bfd8e02680229"};
@@ -936,25 +937,26 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   }
 
   /* ── Session (device-local) ── */
-  function getSession() { try { return JSON.parse(localStorage.getItem('arcadeSession') || 'null'); } catch { return null; } }
-  function saveSession(u) { localStorage.setItem('arcadeSession', JSON.stringify(u)); }
+  function getSession() {
+    const u = firebase.auth().currentUser;
+    if (!u) return null;
+    return { name: u.displayName };
+  }
 
-  /* ── Auth actions (accounts stored in Firestore) ── */
+  /* ── Auth actions ── */
   async function doSignIn() {
     const name = document.getElementById('si-name').value.trim();
     const pass = document.getElementById('si-pass').value;
     if (!name || !pass) { showError('si-error', 'fill in all fields'); return; }
     try {
-      const snap = await db.collection('users').where('name_lower', '==', name.toLowerCase()).limit(1).get();
-      if (snap.empty || snap.docs[0].data().password !== pass) {
-        showError('si-error', 'wrong name or password'); return;
-      }
-      const user = { name: snap.docs[0].data().name, password: pass };
-      saveSession(user);
+      await firebase.auth().signInWithEmailAndPassword(`${name.toLowerCase()}@retro-arcade.app`, pass);
       playLetsPlaySound();
-      onLogin(user);
     } catch(e) {
-      showError('si-error', 'connection error — try again');
+      if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found' || e.code === 'auth/invalid-email') {
+        showError('si-error', 'wrong name or password');
+      } else {
+        showError('si-error', 'connection error — try again');
+      }
     }
   }
 
@@ -966,28 +968,25 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     if (pass !== pass2) { showError('ca-error', 'passwords do not match'); return; }
     if (pass.length < 6) { showError('ca-error', 'password too short (6+ chars)'); return; }
     try {
-      const snap = await db.collection('users').where('name_lower', '==', name.toLowerCase()).limit(1).get();
-      if (!snap.empty) { showError('ca-error', 'name already taken'); return; }
-      await db.collection('users').add({ name, name_lower: name.toLowerCase(), password: pass });
-      const user = { name, password: pass };
-      saveSession(user);
+      const nameLower = name.toLowerCase();
+      const existing = await db.collection('users').where('name_lower', '==', nameLower).limit(1).get();
+      if (!existing.empty) { showError('ca-error', 'name already taken'); return; }
+      const cred = await firebase.auth().createUserWithEmailAndPassword(`${nameLower}@retro-arcade.app`, pass);
+      await cred.user.updateProfile({ displayName: name });
+      await db.collection('users').add({ name, name_lower: nameLower, uid: cred.user.uid });
       playLetsPlaySound();
-      onLogin(user);
     } catch(e) {
-      showError('ca-error', 'connection error — try again');
+      if (e.code === 'auth/email-already-in-use') {
+        showError('ca-error', 'name already taken');
+      } else {
+        showError('ca-error', 'connection error — try again');
+      }
     }
   }
 
-  function doSignOut() {
-    localStorage.removeItem('arcadeSession');
+  async function doSignOut() {
     document.getElementById('user-dropdown').style.display = 'none';
-    document.getElementById('user-menu-wrap').style.display = 'none';
-    document.getElementById('theme-toggle').style.display = 'none';
-    document.getElementById('auth-popup').style.display = 'flex';
-    document.getElementById('welcome-msg').textContent = '';
-    document.getElementById('si-name').value = '';
-    document.getElementById('si-pass').value = '';
-    switchTab('signin');
+    await firebase.auth().signOut();
   }
 
   function onLogin(user) {
@@ -1155,14 +1154,15 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
           ${isMe ? `<div style="border-top:1px solid #2a1840;margin-top:10px;padding-top:10px;display:flex;flex-direction:column;gap:12px;">
             <div style="display:flex;align-items:center;gap:6px;">${swatches}</div>
             <div style="display:flex;align-items:center;gap:6px;">
-              <input id="bio-input" value="${escHtml(bio)}" maxlength="80" placeholder="describe yourself..." style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #5a2855;border-radius:4px;padding:9px 12px;font-family:var(--font-pixel);font-size:0.42rem;color:#c0a0d8;outline:none;" onkeydown="if(event.key==='Enter')saveProfile('${u.id}')">
-              <button onclick="saveProfile('${u.id}')" style="background:rgba(224,112,168,0.15);border:1px solid #5a2855;border-radius:4px;padding:9px 16px;font-family:var(--font-pixel);font-size:0.42rem;color:#f0c0d8;cursor:pointer;white-space:nowrap;flex-shrink:0;">Save</button>
+              <input id="bio-input" value="${escHtml(bio)}" maxlength="80" placeholder="describe yourself..." style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #5a2855;border-radius:4px;padding:9px 12px;font-family:var(--font-pixel);font-size:0.42rem;color:#c0a0d8;outline:none;" onkeydown="if(event.key==='Enter')saveProfile()">
+              <button onclick="saveProfile()" style="background:rgba(224,112,168,0.15);border:1px solid #5a2855;border-radius:4px;padding:9px 16px;font-family:var(--font-pixel);font-size:0.42rem;color:#f0c0d8;cursor:pointer;white-space:nowrap;flex-shrink:0;">Save</button>
             </div>
           </div>` : ''}
         </div>`;
       }).join('');
     } catch(e) {
-      list.innerHTML = '<div style="text-align:center;padding:40px;font-family:var(--font-pixel);font-size:0.38rem;color:#e09080;">failed to load</div>';
+      console.error('[Players] fetch failed:', e);
+      list.innerHTML = '<div style="text-align:center;padding:40px;font-family:var(--font-pixel);font-size:0.38rem;color:#e09080;">failed to load<br><span style="font-size:0.3rem;color:#9878b8;">check console for details</span></div>';
     }
   }
 
@@ -1284,10 +1284,13 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     ]);
   }
 
-  async function saveProfile(userId) {
+  async function saveProfile() {
+    const uid = firebase.auth().currentUser?.uid;
+    if (!uid) return;
     const bio = document.getElementById('bio-input').value.trim();
     try {
-      await db.collection('users').doc(userId).update({ bio, color: selectedColor || '#f0c0d8' });
+      const snap = await db.collection('users').where('uid', '==', uid).limit(1).get();
+      if (!snap.empty) await snap.docs[0].ref.update({ bio, color: selectedColor || '#f0c0d8' });
       openPlayers();
     } catch(e) {}
   }
@@ -1383,12 +1386,20 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   });
 
   /* ── Init ── */
-  const session = getSession();
-  if (session) {
-    onLogin(session);
-  } else {
-    setTimeout(() => document.getElementById('si-name').focus(), 120);
-  }
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      onLogin({ name: user.displayName });
+    } else {
+      document.getElementById('auth-popup').style.display = 'flex';
+      document.getElementById('user-menu-wrap').style.display = 'none';
+      document.getElementById('theme-toggle').style.display = 'none';
+      document.getElementById('welcome-msg').textContent = '';
+      document.getElementById('si-name').value = '';
+      document.getElementById('si-pass').value = '';
+      switchTab('signin');
+      setTimeout(() => document.getElementById('si-name').focus(), 120);
+    }
+  });
 
   /* ── Theme ── */
   const MOON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';

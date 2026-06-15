@@ -157,6 +157,7 @@ body.light-mode #theme-toggle {
 body.light-mode #theme-toggle:hover { opacity: 1; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 const _fbCfg={apiKey:"AIzaSyAs4pZ-k8IPAAtk3dLM7Gy-oL4nLmOPN4g",authDomain:"retro-arcade-f61e1.firebaseapp.com",projectId:"retro-arcade-f61e1",storageBucket:"retro-arcade-f61e1.firebasestorage.app",messagingSenderId:"750905179148",appId:"1:750905179148:web:e27684e54bfd8e02680229"};
@@ -448,7 +449,7 @@ function playExitSound() {
 
 function saveToLeaderboard(game, score) {
   try {
-    const user = JSON.parse(localStorage.getItem('arcadeSession') || 'null');
+    const user = firebase.auth().currentUser ? { name: firebase.auth().currentUser.displayName } : null;
     if (!user) return;
     db.collection('leaderboard').add({ name: user.name, game, score, date: new Date().toISOString() })
       .catch(e => console.error('[Leaderboard] write failed:', e));

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ARCADE</title>
 <link rel="stylesheet" href="theme.css">
-<link href="https://fonts.googleapis.com/css2?family=VT323&family=Silkscreen&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Silkscreen&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -865,7 +865,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     </div>
     <div id="dm-messages" style="overflow-y:auto;flex:1;padding:14px 18px;display:flex;flex-direction:column;gap:8px;"></div>
     <div style="border-top:1px solid #5a2855;padding:12px 18px;display:flex;gap:8px;flex-shrink:0;">
-      <input id="dm-input" maxlength="300" placeholder="type a message..." style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #5a2855;border-radius:4px;padding:9px 12px;font-family:var(--font-pixel);font-size:0.42rem;color:#c0a0d8;outline:none;" onkeydown="if(event.key==='Enter')sendDM()">
+      <input id="dm-input" maxlength="300" placeholder="type a message..." style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #5a2855;border-radius:4px;padding:9px 12px;font-family:var(--font-pixel);font-size:0.42rem;color:#c0a0d8;outline:none;" onkeydown="if(event.key==='Enter'&&!event.isComposing)sendDM()">
       <button onclick="sendDM()" style="background:rgba(224,112,168,0.15);border:1px solid #5a2855;border-radius:4px;padding:9px 16px;font-family:var(--font-pixel);font-size:0.42rem;color:#f0c0d8;cursor:pointer;white-space:nowrap;flex-shrink:0;">Send</button>
     </div>
   </div>
@@ -886,13 +886,14 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
 <!-- User menu (top-left, shown after login) -->
 <div id="user-menu-wrap" style="display:none;position:fixed;top:14px;left:14px;z-index:300;">
   <button id="user-menu-btn" onclick="toggleUserMenu()"
-    style="background:rgba(0,0,0,0.15);border:1.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:calc(6px + 0.34rem) 12px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:rgba(255,255,255,0.65);cursor:pointer;backdrop-filter:blur(8px);transition:background 0.2s,border-color 0.2s,color 0.2s,opacity 0.2s;display:flex;align-items:center;gap:6px;opacity:0.75;line-height:1;"
+    style="position:relative;background:rgba(0,0,0,0.15);border:1.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:calc(6px + 0.34rem) 12px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:rgba(255,255,255,0.65);cursor:pointer;backdrop-filter:blur(8px);transition:background 0.2s,border-color 0.2s,color 0.2s,opacity 0.2s;display:flex;align-items:center;gap:6px;opacity:0.75;line-height:1;"
     onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.75'">
     <span id="user-menu-label">👤 </span>▾
+    <div id="unread-dot" style="display:none;position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#f8a0c0;border:2px solid #0e0912;box-shadow:0 0 6px #f8a0c0;"></div>
   </button>
   <div id="user-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#1e1035;border:2px solid #5a2855;border-radius:4px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,0.6);overflow:hidden;">
     <button onclick="openLB()" style="display:block;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">🏆 Leaderboard</button>
-    <button onclick="openPlayers()" style="display:block;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">👥 Players</button>
+    <button onclick="openPlayers()" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">👥 Players<div id="unread-dot-menu" style="display:none;width:8px;height:8px;border-radius:50%;background:#f8a0c0;box-shadow:0 0 6px #f8a0c0;flex-shrink:0;"></div></button>
     <button onclick="doSignOut()" style="display:block;width:100%;background:none;border:none;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#c090b0;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.08)'" onmouseout="this.style.background='none'">Sign Out</button>
   </div>
 </div>
@@ -1004,11 +1005,18 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   /* ── User menu dropdown ── */
   function toggleUserMenu() {
     const dd = document.getElementById('user-dropdown');
-    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+    const opening = dd.style.display === 'none';
+    dd.style.display = opening ? 'block' : 'none';
+    const hasUnread = document.getElementById('unread-dot').style.display !== 'none';
+    document.getElementById('unread-dot').style.display = (!opening && hasUnread) ? 'block' : 'none';
+    document.getElementById('unread-dot-menu').style.display = (opening && hasUnread) ? 'block' : 'none';
   }
   document.addEventListener('click', e => {
     if (!document.getElementById('user-menu-wrap').contains(e.target)) {
       document.getElementById('user-dropdown').style.display = 'none';
+      const hasUnread = document.getElementById('unread-dot-menu').style.display !== 'none';
+      document.getElementById('unread-dot-menu').style.display = 'none';
+      if (hasUnread) document.getElementById('unread-dot').style.display = 'block';
     }
   });
 
@@ -1148,7 +1156,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="font-family:var(--font-pixel);font-size:0.52rem;color:${nameColor};letter-spacing:1px;white-space:nowrap;">${escHtml(u.name)}</div>
             ${isMe ? '<span style="font-family:var(--font-pixel);font-size:0.38rem;color:#9878b8;white-space:nowrap;">(you)</span>' : ''}
-            <span style="font-family:var(--font-pixel);font-size:0.38rem;color:${bio ? '#9878b8' : '#5a2855'};font-style:${bio ? 'normal' : 'italic'};">${bio ? escHtml(bio) : 'no bio yet'}</span>
+            <span style="font-family:var(--font-pixel);font-size:0.52rem;color:${bio ? '#9878b8' : '#5a2855'};font-style:${bio ? 'normal' : 'italic'};">${bio ? escHtml(bio) : 'no bio yet'}</span>
             ${!isMe ? `<div onclick="openDM('${escHtml(u.name)}')" style="position:relative;margin-left:auto;flex-shrink:0;cursor:pointer;opacity:0.5;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.5'"><svg width="16" height="15" viewBox="0 0 16 15" fill="none"><rect x="0.7" y="0.7" width="14.6" height="9.6" rx="2.8" stroke="#9878b8" stroke-width="1.3"/><path d="M3.5 10.3 L5 13.2 L7.5 10.3" stroke="#9878b8" stroke-width="1.3" stroke-linejoin="round" fill="#1e1035"/></svg>${unreadSet.has(u.name_lower) ? '<div style="position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:#f8a0c0;border:1px solid #1e1035;"></div>' : ''}</div>` : ''}
           </div>
           ${isMe ? `<div style="border-top:1px solid #2a1840;margin-top:10px;padding-top:10px;display:flex;flex-direction:column;gap:12px;">
@@ -1173,6 +1181,29 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   let dmListener = null;
   let dmConvoListener = null;
   let dmRecipient = '';
+  let _unreadListener = null;
+
+  function startUnreadListener() {
+    const me = getSession();
+    if (!me) return;
+    if (_unreadListener) { _unreadListener(); _unreadListener = null; }
+    _unreadListener = db.collection('dms')
+      .where('participants', 'array-contains', me.name.toLowerCase())
+      .onSnapshot(snap => {
+        const hasUnread = snap.docs.some(d => {
+          const data = d.data();
+          if (!data.lastMessageAt || !data.lastMessageFrom) return false;
+          if (data.lastMessageFrom === me.name.toLowerCase()) return false;
+          const myLastRead = (data.lastRead || {})[me.name.toLowerCase()];
+          const lastMsgTime = data.lastMessageAt.toDate ? data.lastMessageAt.toDate() : new Date(data.lastMessageAt);
+          const readTime = myLastRead ? (myLastRead.toDate ? myLastRead.toDate() : new Date(myLastRead)) : null;
+          return !readTime || lastMsgTime > readTime;
+        });
+        const dropdownOpen = document.getElementById('user-dropdown').style.display !== 'none';
+        document.getElementById('unread-dot').style.display = (hasUnread && !dropdownOpen) ? 'block' : 'none';
+        document.getElementById('unread-dot-menu').style.display = (hasUnread && dropdownOpen) ? 'block' : 'none';
+      });
+  }
   let _dmMessages = [];
   let _dmLastRead = {};
 
@@ -1191,7 +1222,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
       const dateKey = ts.toDateString();
       const dateLabel = ts.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
       const separator = dateKey !== lastDate
-        ? `<div style="display:flex;align-items:center;gap:8px;margin:6px 0;"><div style="flex:1;height:1px;background:#2a1840;"></div><span style="font-family:var(--font-pixel);font-size:0.28rem;color:#5a2855;white-space:nowrap;letter-spacing:1px;">${dateLabel}</span><div style="flex:1;height:1px;background:#2a1840;"></div></div>`
+        ? `<div style="display:flex;align-items:center;gap:8px;margin:6px 0;"><div style="flex:1;height:1px;background:#2a1840;"></div><span style="font-family:var(--font-pixel);font-size:0.38rem;color:#5a2855;white-space:nowrap;letter-spacing:1px;">${dateLabel}</span><div style="flex:1;height:1px;background:#2a1840;"></div></div>`
         : '';
       lastDate = dateKey;
       let status = '';
@@ -1199,15 +1230,15 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
         const msgTime = msg.timestamp ? msg.timestamp.toDate() : null;
         const readTime = theirLastRead ? (theirLastRead.toDate ? theirLastRead.toDate() : new Date(theirLastRead)) : null;
         const isRead = readTime && msgTime && readTime > msgTime;
-        status = `<div style="text-align:right;font-family:var(--font-pixel);font-size:0.24rem;color:${isRead ? '#88c0b0' : '#7a5870'};margin-top:2px;letter-spacing:0.5px;opacity:0.85;">${isRead ? '✓ read' : '✓ delivered'}</div>`;
+        status = `<div style="text-align:right;font-family:var(--font-pixel);font-size:0.36rem;color:${isRead ? '#88c0b0' : '#7a5870'};margin-top:6px;letter-spacing:0.5px;opacity:0.85;">${isRead ? '✓ read' : '✓ delivered'}</div>`;
       }
       const prevMsg = i > 0 ? _dmMessages[i - 1] : null;
       const isNewRun = !prevMsg || prevMsg.from.toLowerCase() !== msg.from.toLowerCase();
       const showName = !isMe && isNewRun;
       return separator + `<div style="display:flex;flex-direction:column;align-items:${isMe ? 'flex-end' : 'flex-start'};">
-          ${showName ? `<div style="font-family:'Space Mono',monospace;font-size:0.55rem;color:#9878b8;margin-bottom:4px;margin-left:2px;">${escHtml(msg.from)}</div>` : ''}
+          ${showName ? `<div style="font-family:'Nunito',sans-serif;font-size:0.7rem;font-weight:700;color:#9878b8;margin-bottom:4px;margin-left:2px;">${escHtml(msg.from)}</div>` : ''}
           <div style="max-width:75%;background:${isMe ? 'rgba(224,112,168,0.18)' : 'rgba(255,255,255,0.05)'};border:1px solid ${isMe ? '#c060a0' : '#3a2050'};border-radius:${isMe ? '10px 10px 2px 10px' : '10px 10px 10px 2px'};padding:8px 12px;">
-            <div style="font-family:'Space Mono',monospace;font-size:0.72rem;color:#f0c0d8;line-height:1.6;">${escHtml(msg.text)}</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:0.88rem;font-weight:600;color:#f0c0d8;line-height:1.6;">${escHtml(msg.text)}</div>
           </div>
           ${status}
         </div>`;
@@ -1389,7 +1420,10 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   firebase.auth().onAuthStateChanged(user => {
     if (user) {
       onLogin({ name: user.displayName });
+      startUnreadListener();
     } else {
+      if (_unreadListener) { _unreadListener(); _unreadListener = null; }
+      document.getElementById('unread-dot').style.display = 'none';
       document.getElementById('auth-popup').style.display = 'flex';
       document.getElementById('user-menu-wrap').style.display = 'none';
       document.getElementById('theme-toggle').style.display = 'none';

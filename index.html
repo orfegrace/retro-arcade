@@ -853,6 +853,18 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   </div>
 </div>
 
+<!-- Players modal -->
+<div id="players-modal" style="display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;background:rgba(14,9,18,0.93);">
+  <div style="background:linear-gradient(160deg,#1e1035,#110920);border:2px solid #c060a0;border-radius:4px;max-width:500px;width:93%;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(180,60,140,0.45),0 30px 60px rgba(0,0,0,0.8);position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#e060b8,#a888e0,#e060b8,transparent);"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:2px solid #5a2855;flex-shrink:0;">
+      <div style="font-family:var(--font-pixel);font-size:0.78rem;letter-spacing:2px;background:linear-gradient(135deg,#f880cc,#c8a0f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">👥 PLAYERS</div>
+      <button onclick="closePlayers()" style="background:none;border:none;color:#9878b8;font-size:1.1rem;cursor:pointer;line-height:1;padding:4px;transition:color 0.2s;" onmouseover="this.style.color='#f0c0d8'" onmouseout="this.style.color='#9878b8'">✕</button>
+    </div>
+    <div id="players-list" style="overflow-y:auto;padding:0;flex:1;"></div>
+  </div>
+</div>
+
 <!-- User menu (top-left, shown after login) -->
 <div id="user-menu-wrap" style="display:none;position:fixed;top:14px;left:14px;z-index:300;">
   <button id="user-menu-btn" onclick="toggleUserMenu()"
@@ -862,6 +874,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   </button>
   <div id="user-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#1e1035;border:2px solid #5a2855;border-radius:4px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,0.6);overflow:hidden;">
     <button onclick="openLB()" style="display:block;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">🏆 Leaderboard</button>
+    <button onclick="openPlayers()" style="display:block;width:100%;background:none;border:none;border-bottom:1px solid #5a2855;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#f0c0d8;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.12)'" onmouseout="this.style.background='none'">👥 Players</button>
     <button onclick="doSignOut()" style="display:block;width:100%;background:none;border:none;padding:10px 16px;font-family:var(--font-pixel);font-size:0.32rem;letter-spacing:1px;color:#c090b0;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(224,112,168,0.08)'" onmouseout="this.style.background='none'">Sign Out</button>
   </div>
 </div>
@@ -1059,6 +1072,46 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
     document.getElementById('lb-modal').style.display = 'none';
   }
 
+  async function openPlayers() {
+    document.getElementById('user-dropdown').style.display = 'none';
+    document.getElementById('players-modal').style.display = 'flex';
+    const list = document.getElementById('players-list');
+    list.innerHTML = '<div style="text-align:center;padding:40px;font-family:var(--font-pixel);font-size:0.48rem;color:#9878b8;letter-spacing:2px;">LOADING...</div>';
+    const me = getSession();
+    try {
+      const snap = await db.collection('users').orderBy('name_lower').get();
+      const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      list.innerHTML = users.map(u => {
+        const isMe = me && me.name.toLowerCase() === u.name_lower;
+        const bio = u.bio || '';
+        return `<div style="padding:12px 22px;border-bottom:1px solid #2a1840;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-family:var(--font-pixel);font-size:0.52rem;color:#f0c0d8;letter-spacing:1px;white-space:nowrap;">${escHtml(u.name)}${isMe ? ' <span style="color:#9878b8;font-size:0.38rem;">(you)</span>' : ''}</div>
+            <span style="font-family:var(--font-pixel);font-size:0.38rem;color:${bio ? '#9878b8' : '#5a2855'};font-style:${bio ? 'normal' : 'italic'};">${bio ? escHtml(bio) : 'no bio yet'}</span>
+          </div>
+          ${isMe ? `<div style="border-top:1px solid #2a1840;margin-top:10px;padding-top:10px;display:flex;align-items:center;gap:6px;">
+            <input id="bio-input" value="${escHtml(bio)}" maxlength="80" placeholder="describe yourself..." style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #5a2855;border-radius:3px;padding:5px 8px;font-family:var(--font-pixel);font-size:0.38rem;color:#c0a0d8;outline:none;" onkeydown="if(event.key==='Enter')saveBio('${u.id}')">
+            <button onclick="saveBio('${u.id}')" style="background:rgba(224,112,168,0.15);border:1px solid #5a2855;border-radius:3px;padding:5px 10px;font-family:var(--font-pixel);font-size:0.38rem;color:#f0c0d8;cursor:pointer;white-space:nowrap;flex-shrink:0;">Save</button>
+          </div>` : ''}
+        </div>`;
+      }).join('');
+    } catch(e) {
+      list.innerHTML = '<div style="text-align:center;padding:40px;font-family:var(--font-pixel);font-size:0.38rem;color:#e09080;">failed to load</div>';
+    }
+  }
+
+  function closePlayers() {
+    document.getElementById('players-modal').style.display = 'none';
+  }
+
+  async function saveBio(userId) {
+    const bio = document.getElementById('bio-input').value.trim();
+    try {
+      await db.collection('users').doc(userId).update({ bio });
+      openPlayers();
+    } catch(e) {}
+  }
+
   async function renderLB() {
     const games = ['all', ...Object.keys(GAME_LABELS)];
     const tabsEl = document.getElementById('lb-game-tabs');
@@ -1079,10 +1132,20 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
         const maxNorm = Math.max(...withNorm.map(e => e._norm));
         sorted = withNorm
           .map(e => ({ ...e, _norm: e._norm / maxNorm * 999 }))
-          .sort((a, b) => b._norm - a._norm);
+          .sort((a, b) => {
+            if (!a._norm && !b._norm) return new Date(a.date) - new Date(b.date);
+            if (!a._norm) return 1;
+            if (!b._norm) return -1;
+            return b._norm - a._norm;
+          });
       } else {
         snap = await db.collection('leaderboard').where('game', '==', lbActiveGame).get();
-        sorted = snap.docs.map(d => d.data()).sort((a, b) => b.score - a.score);
+        sorted = snap.docs.map(d => d.data()).sort((a, b) => {
+          if (!a.score && !b.score) return new Date(a.date) - new Date(b.date);
+          if (!a.score) return 1;
+          if (!b.score) return -1;
+          return b.score - a.score;
+        });
       }
     } catch(e) {
       console.error('[Leaderboard] fetch failed:', e);
@@ -1126,6 +1189,9 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   /* close lb on backdrop click */
   document.getElementById('lb-modal').addEventListener('click', function(e) {
     if (e.target === this) closeLB();
+  });
+  document.getElementById('players-modal').addEventListener('click', function(e) {
+    if (e.target === this) closePlayers();
   });
 
   /* ── Init ── */

@@ -1042,7 +1042,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   function normalizeScore(game, raw) {
     const cap = SCORE_CAPS[game] || 1000;
     const ratio = (game === 'runner' || game === 'worm') ? Math.sqrt(raw / cap) : raw / cap;
-    return Math.round(1000 * (1 - Math.pow(0.1, ratio)));
+    return Math.min(999, Math.round(1000 * (1 - Math.pow(0.1, ratio))));
   }
 
   let lbActiveGame = 'all';

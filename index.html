@@ -1036,7 +1036,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
   /* Score a skilled player realistically achieves in a great game — maps to 1000 in ALL tab */
   const SCORE_CAPS = {
     hangman: 800, memory: 900, worm: 300, tetris: 8000,
-    plinko: 3000, '2048': 25000, runner: 2000, countdown: 1100, mole: 300
+    plinko: 8000, '2048': 25000, runner: 2000, countdown: 1100, mole: 300
   };
 
   function normalizeScore(game, raw) {
@@ -1074,8 +1074,11 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
       let snap;
       if (isAll) {
         snap = await db.collection('leaderboard').get();
-        sorted = snap.docs.map(d => d.data())
-          .map(e => ({ ...e, _norm: normalizeScore(e.game, e.score) }))
+        const withNorm = snap.docs.map(d => d.data())
+          .map(e => ({ ...e, _norm: normalizeScore(e.game, e.score) }));
+        const maxNorm = Math.max(...withNorm.map(e => e._norm));
+        sorted = withNorm
+          .map(e => ({ ...e, _norm: e._norm / maxNorm * 999 }))
           .sort((a, b) => b._norm - a._norm);
       } else {
         snap = await db.collection('leaderboard').where('game', '==', lbActiveGame).get();
@@ -1093,7 +1096,7 @@ body.light-mode #theme-toggle:hover { opacity: 1; }
       return;
     }
 
-    const fairNote = isAll ? `<div style="padding:8px 22px 6px;font-family:var(--font-pixel);font-size:0.3rem;color:#5a2855;letter-spacing:1px;">scores normalized 0–1000 for cross-game fairness ★ scroll for raw scores</div>` : '';
+    const fairNote = isAll ? `<div style="padding:8px 22px 6px;font-family:var(--font-pixel);font-size:0.3rem;color:#5a2855;letter-spacing:1px;text-align:center;">scores normalized 0–1000 for cross-game fairness ★ scroll for raw scores</div>` : '';
 
     entriesEl.innerHTML = fairNote + sorted.map((e, i) => {
       const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span style="font-family:var(--font-pixel);font-size:0.4rem;color:#9878b8;min-width:22px;display:inline-block;text-align:center;">${i+1}</span>`;

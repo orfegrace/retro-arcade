@@ -1262,15 +1262,14 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
     list.innerHTML = '<div style="text-align:center;padding:40px;font-family:var(--font-pixel);font-size:0.48rem;color:#9878b8;letter-spacing:2px;">LOADING...</div>';
     const me = getSession();
     try {
-      const [snap, dmSnap, lbSnap] = await Promise.all([
+      const [snap, dmSnap] = await Promise.all([
         db.collection('users').orderBy('name_lower').get(),
         me ? db.collection('dms').where('participants', 'array-contains', me.name.toLowerCase()).get() : Promise.resolve({ docs: [] }),
-        db.collection('leaderboard').get(),
       ]);
       const gameCountMap = {};
-      lbSnap.docs.forEach(d => {
-        const n = (d.data().name || '').toLowerCase();
-        gameCountMap[n] = (gameCountMap[n] || 0) + 1;
+      snap.docs.forEach(d => {
+        const u = d.data();
+        if (u.name_lower) gameCountMap[u.name_lower] = u.gamesPlayed || 0;
       });
       snap.docs.forEach(d => { const u = d.data(); _userColorMap[u.name_lower] = u.color || '#f8e8f4'; });
       const unreadSet = new Set();
@@ -1579,6 +1578,7 @@ body.light-mode .dm-bubble-text { color: #5a1040 !important; }
   /* ── Init ── */
   firebase.auth().onAuthStateChanged(user => {
     if (user) {
+      if (!user.displayName) { user.reload().then(() => onLogin({ name: firebase.auth().currentUser?.displayName || '' })); return; }
       onLogin({ name: user.displayName });
       startUnreadListener();
     } else {

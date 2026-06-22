@@ -93,4 +93,4 @@ To use your own Firebase project:
 
 ## Author
 
-Created by Grace Chang.
+*Created by orfegrace*
